@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/selector'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Code, Copy, Download, RefreshCw, AlertCircle, CheckCircle, Plus, Settings } from 'lucide-react'
@@ -27,7 +27,7 @@ interface GeneratedPattern {
   flags: string[]
 }
 
-export default class RegexGenerator {
+class RegexGenerator {
   state = {
     selectedTemplate: '',
     customOptions: {
@@ -264,7 +264,7 @@ export default class RegexGenerator {
 }
 
 // React component using the generator class
-export default function RegexGenerator() {
+export default function RegexGeneratorTool() {
   const generator = new RegexGenerator()
   const [state, setState] = useState(generator.state)
 

@@ -1,12 +1,15 @@
-import { Inter } from 'next/font/google'
+// import { Inter } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/toaster'
-import { Analytics } from '@vercel/analytics/react'
-import { SpeedInsights } from '@vercel/speed-insights/next'
-import { Navigation } from '@/components/navigation'
+// import Analytics from '@vercel/analytics'
+// import SpeedInsights from '@vercel/speed-insights/next'
+import { LazyNavigation } from '@/components/lazy-navigation'
+import { ErrorBoundary } from '@/components/error-boundary'
+import { AuthProvider } from '@/lib/auth-context'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+// const inter = Inter({ subsets: ['latin'] })
+const inter = { className: 'font-sans' }
 
 export const metadata = {
   title: {
@@ -147,13 +150,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navigation />
-          <main className="pt-16">
-            {children}
-          </main>
-          <Toaster />
-          <Analytics />
-          <SpeedInsights />
+          <ErrorBoundary>
+            <AuthProvider>
+              <LazyNavigation />
+              <main className="pt-16">
+                {children}
+              </main>
+              <Toaster />
+              {/* <Analytics /> */}
+              {/* <SpeedInsights /> */}
+            </AuthProvider>
+          </ErrorBoundary>
         </ThemeProvider>
       </body>
     </html>

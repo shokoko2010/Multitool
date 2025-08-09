@@ -448,10 +448,10 @@ export default function DateCalculator() {
 
               <div className="mt-4 space-y-2">
                 <div>
-                  <strong>Start Date:</strong> {formatDate(dateRange.start)}
+                  <strong>Start Date:</strong> {dateRange?.start ? formatDate(dateRange.start) : 'Not selected'}
                 </div>
                 <div>
-                  <strong>End Date:</strong> {formatDate(dateRange.end)}
+                  <strong>End Date:</strong> {dateRange?.end ? formatDate(dateRange.end) : 'Not selected'}
                 </div>
               </div>
             </CardContent>

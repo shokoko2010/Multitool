@@ -17,26 +17,28 @@ import {
   Globe,
   BarChart3,
   Sparkles,
-  ChevronDown
+  ChevronDown,
+  Loader2,
+  User,
+  LogOut
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ToolsSearch } from './tools-search'
+import { EnhancedSearch } from './enhanced-search'
 import { useTheme } from 'next-themes'
+import toast from '@/lib/toast'
+import { Tool } from '@/types/tool'
+import { useAuth } from '@/hooks/use-auth'
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isEnhancedSearch, setIsEnhancedSearch] = useState(true)
+  const [tools, setTools] = useState<Tool[]>([])
+  const [isLoadingTools, setIsLoadingTools] = useState(true)
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
-
-  // Mock tools data
-  const tools = [
-    { id: '1', name: 'SEO Analyzer', href: '/tools/seo-analyzer', description: 'Comprehensive website SEO analysis', category: 'seo', icon: BarChart3, featured: true, popular: true },
-    { id: '2', name: 'AI Content Generator', href: '/tools/ai-content-generator', description: 'Generate high-quality content using AI', category: 'ai', icon: Sparkles, featured: true, popular: true },
-    { id: '3', name: 'Meta Tag Generator', href: '/tools/meta-tag-generator', description: 'Generate SEO-optimized meta tags', category: 'seo', icon: Settings, popular: true },
-    { id: '4', name: 'Image Optimizer', href: '/tools/image-optimizer', description: 'Compress and optimize images', category: 'image', icon: Settings, popular: true },
-  ]
+  const { user, isAuthenticated, isLoading: isAuthLoading, logout } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -46,16 +48,73 @@ export function Navigation() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  useEffect(() => {
+    // Load tools data for search
+    const loadTools = async () => {
+      try {
+        // Simulate API call to get tools
+        const response = await fetch('/api/tools')
+        if (response.ok) {
+          const toolsData = await response.json()
+          setTools(toolsData)
+        } else {
+          // Fallback to mock data if API fails
+          setTools([
+            { id: '1', name: 'SEO Analyzer', href: '/tools/seo-audit-tool', description: 'Comprehensive website SEO analysis', category: 'seo', icon: BarChart3, featured: true, popular: true },
+            { id: '2', name: 'AI Content Generator', href: '/tools/ai-content-generator', description: 'Generate high-quality content using AI', category: 'ai', icon: Sparkles, featured: true, popular: true },
+            { id: '3', name: 'Meta Tag Generator', href: '/tools/meta-tag-generator', description: 'Generate SEO-optimized meta tags', category: 'seo', icon: Settings, popular: true },
+            { id: '4', name: 'Image Optimizer', href: '/tools/image-optimizer', description: 'Compress and optimize images', category: 'image', icon: Settings, popular: true },
+          ])
+        }
+      } catch (error) {
+        console.error('Failed to load tools:', error)
+        // Fallback to mock data
+        setTools([
+          { id: '1', name: 'SEO Analyzer', href: '/tools/seo-audit-tool', description: 'Comprehensive website SEO analysis', category: 'seo', icon: BarChart3, featured: true, popular: true },
+          { id: '2', name: 'AI Content Generator', href: '/tools/ai-content-generator', description: 'Generate high-quality content using AI', category: 'ai', icon: Sparkles, featured: true, popular: true },
+          { id: '3', name: 'Meta Tag Generator', href: '/tools/meta-tag-generator', description: 'Generate SEO-optimized meta tags', category: 'seo', icon: Settings, popular: true },
+          { id: '4', name: 'Image Optimizer', href: '/tools/image-optimizer', description: 'Compress and optimize images', category: 'image', icon: Settings, popular: true },
+        ])
+      } finally {
+        setIsLoadingTools(false)
+      }
+    }
+
+    loadTools()
+  }, [])
+
+  const handleToolSelect = (tool: Tool) => {
+    setIsSearchOpen(false)
+    toast.success(`Opening ${tool.name}...`)
+    // In a real app, you would navigate to the tool page
+    window.location.href = tool.href
+  }
+
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark')
   }
 
+  const handleLogout = async () => {
+    try {
+      await logout()
+      toast.success('Logged out successfully')
+    } catch (error) {
+      toast.error('Failed to log out')
+    }
+  }
+
   const navigationItems = [
+    { name: 'Dashboard', href: '/dashboard', description: 'Your activity and insights' },
     { name: 'Tools', href: '/tools', description: 'Browse all tools' },
+    { name: 'Search Analytics', href: '/search-analytics', description: 'Search performance data' },
     { name: 'Categories', href: '/categories', description: 'View by category' },
     { name: 'About', href: '/about', description: 'Learn more about us' },
     { name: 'Pricing', href: '/pricing', description: 'Premium features' },
   ]
+
+  if (isAuthLoading) {
+    return null // or a loading spinner
+  }
 
   return (
     <>
@@ -132,6 +191,38 @@ export function Navigation() {
                 )}
               </Button>
 
+              {/* Authentication */}
+              {isAuthenticated ? (
+                <div className="hidden lg:flex items-center space-x-2">
+                  <Link href="/dashboard">
+                    <Button variant="ghost" size="sm">
+                      <User className="h-4 w-4 mr-2" />
+                      {user?.name || 'Dashboard'}
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="hidden lg:flex items-center space-x-2">
+                  <Link href="/auth/signin">
+                    <Button variant="ghost" size="sm">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link href="/auth/signup">
+                    <Button size="sm">
+                      Get Started
+                    </Button>
+                  </Link>
+                </div>
+              )}
+
               {/* Mobile Menu Button */}
               <Button
                 variant="ghost"
@@ -140,11 +231,6 @@ export function Navigation() {
                 onClick={() => setIsOpen(true)}
               >
                 <Menu className="h-5 w-5" />
-              </Button>
-
-              {/* CTA */}
-              <Button className="hidden lg:block">
-                Get Started
               </Button>
             </div>
           </div>
@@ -176,6 +262,51 @@ export function Navigation() {
                       <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
                     </Link>
                   ))}
+
+                  {/* Authentication in mobile menu */}
+                  <div className="pt-4 border-t border-border">
+                    {isAuthenticated ? (
+                      <div className="space-y-2">
+                        <Link
+                          href="/dashboard"
+                          className="block py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          <div className="flex items-center">
+                            <User className="h-4 w-4 mr-2" />
+                            Dashboard
+                          </div>
+                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleLogout}
+                          className="w-full justify-start"
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Log Out
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Link
+                          href="/auth/signin"
+                          className="block py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          Sign In
+                        </Link>
+                        <Link
+                          href="/auth/signup"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          <Button className="w-full">
+                            Get Started
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="pt-4 border-t border-border">
                     <Button
@@ -209,10 +340,6 @@ export function Navigation() {
                         </>
                       )}
                     </Button>
-
-                    <Button className="w-full mt-4">
-                      Get Started
-                    </Button>
                   </div>
                 </div>
               </div>
@@ -243,24 +370,53 @@ export function Navigation() {
                 <div className="bg-background border border-border rounded-lg shadow-xl">
                   <div className="p-4 border-b border-border">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold">Search Tools</h3>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setIsSearchOpen(false)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Search className="h-5 w-5" />
+                        Search Tools
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsEnhancedSearch(!isEnhancedSearch)}
+                          className="text-xs"
+                        >
+                          {isEnhancedSearch ? 'Basic' : 'Enhanced'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsSearchOpen(false)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   <div className="p-4">
-                    <ToolsSearch 
-                      tools={tools}
-                      onSelect={(tool) => {
-                        window.location.href = tool.href
-                        setIsSearchOpen(false)
-                      }}
-                    />
+                    {isEnhancedSearch ? (
+                      <div className="relative">
+                        {isLoadingTools ? (
+                          <div className="p-4">
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Loading tools...
+                            </div>
+                          </div>
+                        ) : (
+                          <EnhancedSearch 
+                            tools={tools}
+                            onSelect={handleToolSelect}
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Basic search mode</p>
+                        <p className="text-sm">Switch to enhanced search for better results</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

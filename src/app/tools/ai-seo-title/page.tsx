@@ -120,7 +120,7 @@ export default function AISEOTitleGenerator() {
                           className="shrink-0"
                         >
                           <Copy className="h-4 w-4" />
-                          {copied === title ? 'Copied!' : 'Copy'}
+                          {copied[0] ? 'Copied!' : 'Copy'}
                         </Button>
                       </div>
                     </div>

@@ -17,11 +17,11 @@ interface SitemapUrl {
   priority: string
 }
 
-export default class XmlSitemapGenerator {
+class XmlSitemapGenerator {
   static [key: string]: any;
 }
 
-export default function XmlSitemapGenerator() {
+export default function XmlSitemapGeneratorTool() {
   const [domain, setDomain] = useState('')
   const [urls, setUrls] = useState<SitemapUrl[]>([
     {

@@ -51,10 +51,18 @@ import {
   Grid3X3, 
   Link as LinkIcon,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Loader2,
+  X
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Link } from 'next/link'
+import Link from 'next/link'
+import { EnhancedSearch } from '@/components/enhanced-search'
+import { AdvancedSearch } from '@/components/advanced-search'
+import { GridSkeleton, SearchSkeleton } from '@/components/ui/skeleton'
+import { CategoryNavigation } from '@/components/category-navigation'
+import { ThemeToggle } from '@/components/theme-toggle'
+import toast from '@/lib/toast'
 
 interface Tool {
   name: string
@@ -74,411 +82,169 @@ interface Category {
   description: string
 }
 
-// Tool metadata mapping
-const TOOL_METADATA: Record<string, Partial<Tool>> = {
-  // Network Tools
-  'dns-lookup': { category: 'network', icon: Globe, description: 'DNS record analysis and domain information' },
-  'ip-lookup': { category: 'network', icon: Globe, description: 'Geolocation and IP address information' },
-  'ssl-lookup': { category: 'network', icon: Shield, description: 'SSL certificate validation and analysis' },
-  'whois': { category: 'network', icon: Globe, description: 'Domain registration and ownership information' },
-  'ping': { category: 'network', icon: Globe, description: 'Network connectivity and latency testing' },
-  'port-scanner': { category: 'network', icon: Globe, description: 'Open port detection and security scanning' },
-  'http-headers': { category: 'network', icon: Globe, description: 'HTTP header analysis and inspection' },
-  'http-request': { category: 'network', icon: Globe, description: 'HTTP request testing and debugging' },
-  'reverse-ip': { category: 'network', icon: Globe, description: 'Reverse IP lookup and domain mapping' },
-  'my-ip': { category: 'network', icon: Globe, description: 'Your current IP address information' },
-  'domain-age': { category: 'network', icon: Globe, description: 'Domain age and registration history' },
-  'domain-hosting': { category: 'network', icon: Globe, description: 'Domain hosting and server information' },
-  'domain-to-ip': { category: 'network', icon: Globe, description: 'Domain to IP address conversion' },
-  'ip-geolocation': { category: 'network', icon: Globe, description: 'IP geolocation and location data' },
-  'online-ping-website-tool': { category: 'network', icon: Globe, description: 'Website ping and connectivity testing' },
-  
-  // Security Tools
-  'safe-url': { category: 'security', icon: Shield, description: 'URL safety and threat detection' },
-  'password-strength': { category: 'security', icon: Shield, description: 'Password security analysis and recommendations' },
-  'meta-tags': { category: 'security', icon: Shield, description: 'Meta tag analysis and SEO optimization' },
-  'md5-generator': { category: 'security', icon: Hash, description: 'MD5 hash generation and verification' },
-  'sha256-generator': { category: 'security', icon: Hash, description: 'SHA-256 hash generation and verification' },
-  'password-generator': { category: 'security', icon: Key, description: 'Secure random password generation' },
-  'hash-checker': { category: 'security', icon: Hash, description: 'Hash verification and integrity checking' },
-  'token-generator': { category: 'security', icon: Key, description: 'API token and authentication key generation' },
-  'malware-checker': { category: 'security', icon: Shield, description: 'Website malware and security scanning' },
-  'suspicious-domain': { category: 'security', icon: Shield, description: 'Suspicious domain detection and analysis' },
-  'blacklist': { category: 'security', icon: Shield, description: 'Domain and IP blacklist checking' },
-  'jwt-tool': { category: 'security', icon: Key, description: 'JWT token analysis and validation' },
-  
-  // Text Utilities
-  'text-to-speech': { category: 'text', icon: Volume2, description: 'Text-to-speech conversion with multiple voices' },
-  'case-converter': { category: 'text', icon: Code, description: 'Text case conversion utilities' },
-  'character-counter': { category: 'text', icon: FileText, description: 'Character, word, and line counting' },
-  'email-extractor': { category: 'text', icon: FileText, description: 'Email address extraction from text' },
-  'reverse-words': { category: 'text', icon: Code, description: 'Text and word reversal utilities' },
-  'url-encoder': { category: 'text', icon: LinkIcon, description: 'URL encoding and decoding utilities' },
-  'base64-encoder': { category: 'text', icon: Hash, description: 'Base64 encoding and decoding' },
-  'text-difference': { category: 'text', icon: Code, description: 'Text comparison and diff analysis' },
-  'word-counter': { category: 'text', icon: FileText, description: 'Advanced word counting and analysis' },
-  'text-to-binary': { category: 'text', icon: Binary, description: 'Text to binary conversion' },
-  'text-entropy': { category: 'text', icon: Hash, description: 'Text entropy and randomness analysis' },
-  'text-clustering': { category: 'text', icon: Code, description: 'Text clustering and categorization' },
-  'text-complexity': { category: 'text', icon: Code, description: 'Text complexity and readability analysis' },
-  'sentence-counter': { category: 'text', icon: FileText, description: 'Sentence counting and analysis' },
-  'paragraph-counter': { category: 'text', icon: FileText, description: 'Paragraph counting and structure analysis' },
-  'lorem-ipsum': { category: 'text', icon: FileText, description: 'Lorem ipsum placeholder text generation' },
-  'grammar-checker': { category: 'text', icon: FileText, description: 'Grammar and spelling checking' },
-  
-  // Image Tools
-  'image-converter': { category: 'image', icon: Image, description: 'Image format conversion and optimization' },
-  'youtube-thumbnail': { category: 'image', icon: Image, description: 'YouTube thumbnail extraction and download' },
-  'qr-code-reader': { category: 'image', icon: QrCode, description: 'QR code scanning and content extraction' },
-  'color-picker': { category: 'image', icon: Palette, description: 'Color selection and conversion utilities' },
-  'exif-reader': { category: 'image', icon: Image, description: 'EXIF data extraction from images' },
-  'image-resizer': { category: 'image', icon: Image, description: 'Image resizing and dimension adjustment' },
-  'image-compressor': { category: 'image', icon: Image, description: 'Image compression and optimization' },
-  'image-to-text': { category: 'image', icon: Image, description: 'Extract text from images using OCR' },
-  'image-placeholder': { category: 'image', icon: Image, description: 'Generate placeholder images' },
-  'exif-remover': { category: 'image', icon: Image, description: 'Remove EXIF data from images' },
-  'color-converter': { category: 'image', icon: Palette, description: 'Color format conversion utilities' },
-  'hex-to-rgb': { category: 'image', icon: Palette, description: 'Hex to RGB color conversion' },
-  
-  // SEO Tools
-  'seo-audit-tool': { category: 'seo', icon: TrendingUp, description: 'Comprehensive website SEO analysis' },
-  'keyword-density': { category: 'seo', icon: TrendingUp, description: 'Keyword analysis and density calculation' },
-  'meta-tag-generator': { category: 'seo', icon: Hash, description: 'SEO meta tag generation' },
-  'serp-checker': { category: 'seo', icon: TrendingUp, description: 'Track keyword rankings in search results' },
-  'backlink-checker': { category: 'seo', icon: TrendingUp, description: 'Backlink analysis and monitoring' },
-  'plagiarism-checker': { category: 'seo', icon: FileText, description: 'Content originality and plagiarism detection' },
-  'readability-score': { category: 'seo', icon: FileText, description: 'Content readability and complexity analysis' },
-  'meta-tags-analyzer': { category: 'seo', icon: TrendingUp, description: 'Meta tag analysis and optimization' },
-  'mozrank': { category: 'seo', icon: TrendingUp, description: 'MozRank and domain authority analysis' },
-  'link-analyzer': { category: 'seo', icon: TrendingUp, description: 'Backlink and link analysis' },
-  'keyword-position-checker': { category: 'seo', icon: TrendingUp, description: 'Keyword position tracking' },
-  'keyword-cpc-calculator': { category: 'seo', icon: Calculator, description: 'Keyword CPC and competition analysis' },
-  'google-index': { category: 'seo', icon: TrendingUp, description: 'Google indexing status checking' },
-  'xml-sitemap-generator': { category: 'seo', icon: TrendingUp, description: 'XML sitemap generation' },
-  'robots-txt-generator': { category: 'seo', icon: TrendingUp, description: 'robots.txt file generation' },
-  'pagespeed-insights': { category: 'seo', icon: TrendingUp, description: 'Google PageSpeed Insights analysis' },
-  'structured-data-generator': { category: 'seo', icon: Globe, description: 'JSON-LD structured data generation' },
-  'hreflang-generator': { category: 'seo', icon: Globe, description: 'Hreflang tag generator for multilingual SEO' },
-  'seo-content-template': { category: 'seo', icon: FileText, description: 'SEO-optimized content template generator' },
-  'search-console-simulator': { category: 'seo', icon: BarChart3, description: 'Google Search Console performance simulator' },
-  
-  // AI Tools
-  'ai-content-generator': { category: 'ai', icon: Brain, description: 'AI-powered content creation' },
-  'ai-seo-title': { category: 'ai', icon: Brain, description: 'AI-powered SEO title generation' },
-  'ai-seo-description': { category: 'ai', icon: Brain, description: 'AI meta description generation' },
-  'ai-keyword-cluster': { category: 'ai', icon: Brain, description: 'AI keyword clustering and analysis' },
-  'text-summarizer': { category: 'ai', icon: Brain, description: 'AI text summarization and condensation' },
-  'sentiment-analyzer': { category: 'ai', icon: Brain, description: 'AI sentiment analysis and emotion detection' },
-  'ai-code-reviewer': { category: 'ai', icon: Brain, description: 'AI-powered code quality analysis' },
-  'paraphraser': { category: 'ai', icon: Brain, description: 'AI text paraphrasing and rewriting' },
-  'article-rewriter': { category: 'ai', icon: Brain, description: 'AI article rewriting and optimization' },
-  
-  // Development Tools
-  'json-formatter': { category: 'development', icon: Code, description: 'JSON formatting and validation' },
-  'xml-formatter': { category: 'development', icon: Code, description: 'XML formatting and validation' },
-  'html-formatter': { category: 'development', icon: Code, description: 'HTML formatting and validation' },
-  'sql-formatter': { category: 'development', icon: Code, description: 'SQL formatting and syntax highlighting' },
-  'regex-tester': { category: 'development', icon: Code, description: 'Regular expression testing and validation' },
-  'javascript-formatter': { category: 'development', icon: Code, description: 'JavaScript code formatting and beautification' },
-  'css-formatter': { category: 'development', icon: Code, description: 'CSS formatting and optimization' },
-  'yaml-to-json': { category: 'development', icon: Code, description: 'YAML to JSON conversion' },
-  'xml-to-json': { category: 'development', icon: Code, description: 'XML to JSON conversion' },
-  'json-schema-validator': { category: 'development', icon: Code, description: 'JSON Schema validation' },
-  'regex-generator': { category: 'development', icon: Code, description: 'Regular expression pattern generator' },
-  'git-helper': { category: 'development', icon: GitCompare, description: 'Git command helper and utilities' },
-  'source-code': { category: 'development', icon: Code, description: 'Source code formatting and analysis' },
-  'api-tester': { category: 'development', icon: Code, description: 'API testing and debugging' },
-  
-  // Converters
-  'temperature-converter': { category: 'converters', icon: Calculator, description: 'Temperature unit conversion' },
-  'distance-converter': { category: 'converters', icon: Calculator, description: 'Distance and length unit conversion' },
-  'weight-converter': { category: 'converters', icon: Calculator, description: 'Weight and mass unit conversion' },
-  'timestamp-converter': { category: 'converters', icon: Calendar, description: 'Timestamp and date conversion' },
-  'data-size-converter': { category: 'converters', icon: Calculator, description: 'Data storage size conversion' },
-  'csv-converter': { category: 'converters', icon: Database, description: 'CSV file conversion and processing' },
-  
-  // Data Analysis
-  'data-visualization': { category: 'data', icon: BarChart3, description: 'Create charts and graphs from your data' },
-  'chart-generator': { category: 'data', icon: BarChart3, description: 'Generate various types of charts' },
-  'word-frequency': { category: 'data', icon: BarChart3, description: 'Word frequency analysis and statistics' },
-  'bulk-geo': { category: 'data', icon: Database, description: 'Bulk geocoding and location data processing' },
-  'data-extractor': { category: 'data', icon: Database, description: 'Data extraction from various sources' },
-  
-  // Cryptography
-  'bcrypt-generator': { category: 'cryptography', icon: Hash, description: 'BCrypt hash generation and verification' },
-  'uuid-generator': { category: 'cryptography', icon: Hash, description: 'UUID generation and validation' },
-  'hash-checker': { category: 'cryptography', icon: Hash, description: 'Hash verification and integrity checking' },
-  
-  // File Processing
-  'file-splitter': { category: 'file', icon: FileCode, description: 'Split large files into smaller parts' },
-  'file-joiner': { category: 'file', icon: FileCode, description: 'Join split files back together' },
-  'pdf-tools': { category: 'file', icon: FileCode, description: 'PDF processing and manipulation tools' },
-  
-  // System & Hardware
-  'system-info': { category: 'system', icon: Monitor, description: 'System information and specifications' },
-  'cpu': { category: 'system', icon: Cpu, description: 'CPU information and performance data' },
-  'hard-drive': { category: 'system', icon: HardDrive, description: 'Hard drive and storage information' },
-  
-  // Productivity
-  'calculator': { category: 'productivity', icon: Calculator, description: 'Scientific calculator with advanced functions' },
-  'date-calculator': { category: 'productivity', icon: Calendar, description: 'Date calculation and duration calculator' },
-  'equation-solver': { category: 'productivity', icon: Calculator, description: 'Mathematical equation solver' },
-  
-  // Audio & Video
-  'audio-recorder': { category: 'media', icon: Volume2, description: 'Audio recording and editing tools' },
-  'audio-converter': { category: 'media', icon: Volume2, description: 'Audio format conversion' },
-  'video-converter': { category: 'media', icon: Video, description: 'Video format conversion and processing' },
-  'video-downloader': { category: 'media', icon: Video, description: 'Video downloading from various platforms' },
-  
-  // Communication
-  'whatsapp-link': { category: 'communication', icon: LinkIcon, description: 'WhatsApp link generator' },
-  'utm-link': { category: 'communication', icon: LinkIcon, description: 'UTM parameter generator for tracking' },
-  
-  // Web & Internet
-  'url-shortener': { category: 'web', icon: LinkIcon, description: 'URL shortening and redirection' },
-  'url-rewriting': { category: 'web', icon: LinkIcon, description: 'URL rewriting and redirect rules' },
-  'web-scraper': { category: 'web', icon: Globe, description: 'Web scraping and data extraction' },
-  'html-scraper': { category: 'web', icon: Globe, description: 'HTML content extraction' },
-  'html-to-markdown': { category: 'web', icon: Code, description: 'HTML to Markdown conversion' },
-  
-  // Business & Marketing
-  'link-price': { category: 'business', icon: TrendingUp, description: 'Link pricing and valuation' },
-  'backlink-maker': { category: 'business', icon: TrendingUp, description: 'Backlink generation and building' },
-  'citation-generator': { category: 'business', icon: FileText, description: 'Citation and reference generation' },
-  'terms-conditions': { category: 'business', icon: FileText, description: 'Terms and conditions generator' },
-  'privacy-policy': { category: 'business', icon: FileText, description: 'Privacy policy generator' },
-  'slug-generator': { category: 'business', icon: Hash, description: 'URL slug generation' },
-  'random-generator': { category: 'business', icon: Dice6, description: 'Random data and number generation' },
-  'barcode-generator': { category: 'business', icon: BarcodeIcon, description: 'Barcode generation for various formats' },
-  
-  // Other Tools
-  'performance-optimization': { category: 'optimization', icon: Zap, description: 'Website performance optimization analysis' },
-  'syllable-counter': { category: 'text', icon: FileText, description: 'Syllable counting and analysis' },
-  'line-counter': { category: 'text', icon: FileText, description: 'Line counting and analysis' },
-  'youtube-keywords': { category: 'seo', icon: TrendingUp, description: 'YouTube keyword research and analysis' },
-  'www-redirect': { category: 'web', icon: LinkIcon, description: 'WWW redirect configuration' },
-  'website-screenshot': { category: 'web', icon: Image, description: 'Website screenshot capture' },
-  'upload': { category: 'file', icon: Upload, description: 'File upload and processing' },
-  'download': { category: 'file', icon: Download, description: 'File download utilities' },
-  'check-circle': { category: 'validation', icon: CheckCircle, description: 'Validation and verification tools' },
-  'star': { category: 'rating', icon: Star, description: 'Rating and review tools' },
-  'users': { category: 'social', icon: Users, description: 'Social media and user analysis' },
-  'refresh-cw': { category: 'utility', icon: RefreshCw, description: 'Data refresh and update tools' },
-  'alert-circle': { category: 'notification', icon: AlertCircle, description: 'Alert and notification systems' }
-}
-
-// Default categories
-const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'all', name: 'All Tools', count: 0, icon: Grid3X3, description: 'Browse all available tools' },
-  { id: 'network', name: 'Network Tools', count: 0, icon: Globe, description: 'Diagnostics and analysis utilities' },
-  { id: 'security', name: 'Security Tools', count: 0, icon: Shield, description: 'Vulnerability checking and security analysis' },
-  { id: 'text', name: 'Text Utilities', count: 0, icon: Code, description: 'Text processing and manipulation' },
-  { id: 'image', name: 'Image Tools', count: 0, icon: Image, description: 'Image processing and conversion' },
-  { id: 'seo', name: 'SEO Tools', count: 0, icon: TrendingUp, description: 'Search engine optimization utilities' },
-  { id: 'ai', name: 'AI Tools', count: 0, icon: Brain, description: 'Artificial intelligence and automation' },
-  { id: 'development', name: 'Development', count: 0, icon: Settings, description: 'Coding and development utilities' },
-  { id: 'converters', name: 'Converters', count: 0, icon: Calculator, description: 'Unit and data conversion tools' },
-  { id: 'data', name: 'Data Analysis', count: 0, icon: BarChart3, description: 'Data processing and analysis tools' },
-  { id: 'cryptography', name: 'Cryptography', count: 0, icon: Hash, description: 'Encryption and hashing utilities' },
-  { id: 'file', name: 'File Tools', count: 0, icon: FileCode, description: 'File processing and manipulation' },
-  { id: 'system', name: 'System Tools', count: 0, icon: Monitor, description: 'System and hardware utilities' },
-  { id: 'productivity', name: 'Productivity', count: 0, icon: Calculator, description: 'Productivity and calculation tools' },
-  { id: 'media', name: 'Media Tools', count: 0, icon: Video, description: 'Audio and video processing' },
-  { id: 'communication', name: 'Communication', count: 0, icon: LinkIcon, description: 'Communication and messaging tools' },
-  { id: 'web', name: 'Web Tools', count: 0, icon: Globe, description: 'Web development and internet utilities' },
-  { id: 'business', name: 'Business Tools', count: 0, icon: TrendingUp, description: 'Business and marketing utilities' },
-  { id: 'optimization', name: 'Optimization', count: 0, icon: Zap, description: 'Performance and optimization tools' }
-]
-
 export default function ToolsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [tools, setTools] = useState<Tool[]>([])
   const [filteredTools, setFilteredTools] = useState<Tool[]>([])
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES)
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
+  const [showFilters, setShowFilters] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  
+  // Filter states
+  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false)
+  const [showPopularOnly, setShowPopularOnly] = useState(false)
+  const [sortBy, setSortBy] = useState<'name' | 'popularity' | 'featured'>('name')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  
+  // Favorites state
+  const [favorites, setFavorites] = useState<string[]>([])
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+  
+  // Usage statistics
+  const [usageStats, setUsageStats] = useState<Record<string, number>>({})
+  
+  // Comparison state
+  const [selectedToolsForComparison, setSelectedToolsForComparison] = useState<string[]>([])
+  const [showComparison, setShowComparison] = useState(false)
+  
+  // Ratings and reviews state
+  const [toolRatings, setToolRatings] = useState<Record<string, number>>({})
+  const [toolReviews, setToolReviews] = useState<Record<string, Array<{user: string, rating: number, comment: string, date: string}>>>({})
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [selectedToolForReview, setSelectedToolForReview] = useState<Tool | null>(null)
+  const [newRating, setNewRating] = useState(5)
+  const [newReview, setNewReview] = useState('')
 
-  // Featured tools
-  const featuredTools: Tool[] = [
-    {
-      name: 'SEO Audit Tool',
-      href: '/tools/seo-audit-tool',
-      description: 'Comprehensive website SEO analysis and optimization recommendations',
-      category: 'seo',
-      icon: TrendingUp,
-      featured: true,
-      popular: true
-    },
-    {
-      name: 'Performance Optimization',
-      href: '/tools/performance-optimization',
-      description: 'Website performance analysis and optimization recommendations',
-      category: 'optimization',
-      icon: Zap,
-      featured: true,
-      popular: true
-    },
-    {
-      name: 'AI Content Generator',
-      href: '/tools/ai-content-generator',
-      description: 'Generate high-quality content using advanced AI algorithms',
-      category: 'ai',
-      icon: Brain,
-      featured: true,
-      popular: true
-    }
-  ]
-
-  // Discover tools dynamically by scanning the tools directory
-  const discoverTools = async (): Promise<Tool[]> => {
-    try {
-      // For now, we'll use the actual discovered tools from the filesystem
-      // In a production environment, you might want to use a server-side API call
-      const actualTools = [
-        'dns-lookup', 'ip-lookup', 'ssl-lookup', 'whois', 'ping', 'port-scanner',
-        'http-headers', 'http-request', 'reverse-ip', 'my-ip', 'domain-age',
-        'domain-hosting', 'domain-to-ip', 'ip-geolocation', 'online-ping-website-tool',
-        'safe-url', 'password-strength', 'meta-tags', 'md5-generator', 'sha256-generator',
-        'password-generator', 'hash-checker', 'token-generator', 'malware-checker',
-        'suspicious-domain', 'blacklist', 'jwt-tool', 'text-to-speech', 'case-converter',
-        'character-counter', 'email-extractor', 'reverse-words', 'url-encoder',
-        'base64-encoder', 'text-difference', 'word-counter', 'text-to-binary',
-        'text-entropy', 'text-clustering', 'text-complexity', 'sentence-counter',
-        'paragraph-counter', 'lorem-ipsum', 'grammar-checker', 'image-converter',
-        'youtube-thumbnail', 'qr-code-reader', 'qr-code-generator', 'color-picker', 'exif-reader',
-        'image-resizer', 'image-compressor', 'image-to-text', 'image-placeholder',
-        'exif-remover', 'color-converter', 'hex-to-rgb', 'seo-audit-tool',
-        'keyword-density', 'meta-tag-generator', 'serp-checker', 'backlink-checker',
-        'plagiarism-checker', 'readability-score', 'meta-tags-analyzer', 'mozrank',
-        'link-analyzer', 'keyword-position-checker', 'keyword-cpc-calculator',
-        'google-index', 'xml-sitemap-generator', 'robots-txt-generator', 'pagespeed-insights',
-        'ai-content-generator', 'ai-seo-title', 'ai-seo-description', 'ai-keyword-cluster',
-        'text-summarizer', 'sentiment-analyzer', 'ai-code-reviewer', 'paraphraser',
-        'article-rewriter', 'json-formatter', 'xml-formatter', 'html-formatter',
-        'sql-formatter', 'regex-tester', 'javascript-formatter', 'css-formatter',
-        'yaml-to-json', 'xml-to-json', 'json-schema-validator', 'regex-generator',
-        'git-helper', 'source-code', 'api-tester', 'temperature-converter',
-        'distance-converter', 'weight-converter', 'timestamp-converter', 'data-size-converter',
-        'csv-converter', 'data-visualization', 'chart-generator', 'word-frequency',
-        'bulk-geo', 'data-extractor', 'bcrypt-generator', 'uuid-generator',
-        'file-splitter', 'file-joiner', 'pdf-tools', 'system-info', 'cpu',
-        'hard-drive', 'calculator', 'date-calculator', 'equation-solver',
-        'audio-recorder', 'audio-converter', 'video-converter', 'video-downloader',
-        'whatsapp-link', 'utm-link', 'url-shortener', 'url-rewriting',
-        'web-scraper', 'html-scraper', 'html-to-markdown', 'link-price',
-        'backlink-maker', 'citation-generator', 'terms-conditions', 'privacy-policy',
-        'slug-generator', 'random-generator', 'barcode-generator', 'performance-optimization',
-        'syllable-counter', 'line-counter', 'youtube-keywords', 'www-redirect',
-        'website-screenshot', 'upload', 'download', 'check-circle', 'star',
-        'users', 'refresh-cw', 'alert-circle'
-      ]
-
-      return actualTools.map(path => {
-        const metadata = TOOL_METADATA[path] || {}
-        return {
-          name: formatToolName(path),
-          href: `/tools/${path}`,
-          description: metadata.description || 'Tool description not available',
-          category: metadata.category || 'other',
-          icon: metadata.icon || Settings,
-          featured: metadata.featured || false,
-          popular: metadata.popular || false
-        }
-      })
-    } catch (err) {
-      console.error('Error discovering tools:', err)
-      setError('Failed to load tools. Please try again.')
-      return []
-    }
-  }
-
-  // Format tool name from path
-  const formatToolName = (path: string): string => {
-    return path
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
-  }
-
-  // Initialize tools data
   useEffect(() => {
-    let timeout: NodeJS.Timeout | null = null
-    
-    const loadTools = async () => {
+    const fetchTools = async () => {
       try {
         setIsLoading(true)
-        setError(null)
+        const response = await fetch('/api/tools')
+        const data = await response.json()
         
-        // Set a timeout to prevent infinite loading
-        timeout = setTimeout(() => {
-          setError('Loading took too long. Please try again.')
-          setIsLoading(false)
-        }, 10000) // 10 second timeout
-
-        const discoveredTools = await discoverTools()
-        setTools(discoveredTools)
-        setFilteredTools(discoveredTools)
-        setLastRefresh(new Date())
-
-        // Calculate category counts
-        const counts = categories.map(cat => ({
-          ...cat,
-          count: cat.id === 'all' ? discoveredTools.length : discoveredTools.filter(tool => tool.category === cat.id).length
-        }))
-        
-        setCategories(counts)
-      } catch (err) {
-        console.error('Error loading tools:', err)
-        setError('Failed to load tools. Please try refreshing the page.')
-      } finally {
-        if (timeout) {
-          clearTimeout(timeout)
+        if (data.success) {
+          setTools(data.data)
+          setCategories(data.categories)
+          
+          // Add 'All Tools' category to the beginning
+          const allToolsCategory = {
+            id: 'all',
+            name: 'All Tools',
+            count: data.total,
+            icon: Grid3X3,
+            description: 'Browse all available tools'
+          }
+          setCategories(prev => [allToolsCategory, ...prev])
         }
+      } catch (error) {
+        console.error('Failed to fetch tools:', error)
+        toast.error('Failed to load tools')
+      } finally {
         setIsLoading(false)
       }
     }
 
-    loadTools()
+    fetchTools()
+  }, [])
+
+  // Load favorites from localStorage
+  useEffect(() => {
+    const savedFavorites = localStorage.getItem('tool-favorites')
+    if (savedFavorites) {
+      setFavorites(JSON.parse(savedFavorites))
+    }
     
-    // Cleanup timeout on unmount
-    return () => {
-      if (timeout) {
-        clearTimeout(timeout)
-      }
+    // Load usage stats from localStorage
+    const savedStats = localStorage.getItem('tool-usage-stats')
+    if (savedStats) {
+      setUsageStats(JSON.parse(savedStats))
+    }
+    
+    // Load ratings from localStorage
+    const savedRatings = localStorage.getItem('tool-ratings')
+    if (savedRatings) {
+      setToolRatings(JSON.parse(savedRatings))
+    }
+    
+    // Load reviews from localStorage
+    const savedReviews = localStorage.getItem('tool-reviews')
+    if (savedReviews) {
+      setToolReviews(JSON.parse(savedReviews))
     }
   }, [])
 
-  // Refresh tools
-  const refreshTools = async () => {
-    setIsLoading(true)
-    setError(null)
-    
-    try {
-      const discoveredTools = await discoverTools()
-      setTools(discoveredTools)
-      setFilteredTools(discoveredTools)
-      setLastRefresh(new Date())
-
-      // Recalculate category counts
-      const counts = categories.map(cat => ({
-        ...cat,
-        count: cat.id === 'all' ? discoveredTools.length : discoveredTools.filter(tool => tool.category === cat.id).length
-      }))
-      
-      setCategories(counts)
-    } catch (err) {
-      console.error('Error refreshing tools:', err)
-      setError('Failed to refresh tools. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Filter tools based on search and category
+  // Keyboard navigation
   useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl/Cmd + K for search focus
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault()
+        const searchInput = document.querySelector('input[placeholder="Search tools..."]') as HTMLInputElement
+        if (searchInput) {
+          searchInput.focus()
+        }
+      }
+      
+      // Ctrl/Cmd + F for filters toggle
+      if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+        event.preventDefault()
+        setShowFilters(!showFilters)
+      }
+      
+      // Escape to close filters and clear search
+      if (event.key === 'Escape') {
+        if (showFilters) {
+          setShowFilters(false)
+        } else if (searchQuery) {
+          setSearchQuery('')
+        }
+      }
+      
+      // Arrow keys for navigation in grid view
+      if (viewMode === 'grid' && !showFilters) {
+        const tools = document.querySelectorAll('[data-tool-card]')
+        const focusedElement = document.activeElement as HTMLElement
+        
+        if (focusedElement.closest('[data-tool-card]')) {
+          const currentCard = focusedElement.closest('[data-tool-card]') as HTMLElement
+          const currentIndex = Array.from(tools).indexOf(currentCard)
+          
+          switch (event.key) {
+            case 'ArrowRight':
+            case 'ArrowDown':
+              event.preventDefault()
+              const nextIndex = currentIndex + 1
+              if (nextIndex < tools.length) {
+                ;(tools[nextIndex] as HTMLElement).focus()
+              }
+              break
+            case 'ArrowLeft':
+            case 'ArrowUp':
+              event.preventDefault()
+              const prevIndex = currentIndex - 1
+              if (prevIndex >= 0) {
+                ;(tools[prevIndex] as HTMLElement).focus()
+              }
+              break
+            case 'Enter':
+            case ' ':
+              event.preventDefault()
+              currentCard.click()
+              break
+          }
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [showFilters, searchQuery, viewMode])
+
+  useEffect(() => {
+    // Filter tools based on search and category
     let filtered = tools
 
     if (selectedCategory !== 'all') {
@@ -492,330 +258,946 @@ export default function ToolsPage() {
       )
     }
 
+    if (showFeaturedOnly) {
+      filtered = filtered.filter(tool => tool.featured)
+    }
+
+    if (showPopularOnly) {
+      filtered = filtered.filter(tool => tool.popular)
+    }
+
+    if (showFavoritesOnly) {
+      filtered = filtered.filter(tool => favorites.includes(tool.name))
+    }
+
+    // Sort tools
+    filtered.sort((a, b) => {
+      let comparison = 0
+      
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name)
+          break
+        case 'popularity':
+          const aPopularity = (a.popular ? 1 : 0) - (a.featured ? 0.5 : 0)
+          const bPopularity = (b.popular ? 1 : 0) - (b.featured ? 0.5 : 0)
+          comparison = aPopularity - bPopularity
+          break
+        case 'featured':
+          const aFeatured = a.featured ? 1 : 0
+          const bFeatured = b.featured ? 1 : 0
+          comparison = aFeatured - bFeatured
+          break
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison
+    })
+
     setFilteredTools(filtered)
-  }, [tools, selectedCategory, searchQuery])
+  }, [tools, selectedCategory, searchQuery, showFeaturedOnly, showPopularOnly, sortBy, sortOrder])
 
-  const handleToolClick = (href: string) => {
-    console.log(`Tool clicked: ${href}`)
+  const handleToolClick = (tool: Tool) => {
+    trackToolUsage(tool.name)
+    toast.success(`Opening ${tool.name}...`)
+    window.location.href = tool.href
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        {/* Hero Section Skeleton */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-primary/5 py-20">
-          <div className="container mx-auto px-6">
-            <div className="text-center space-y-6">
-              <div className="flex items-center justify-center gap-4">
-                <div className="animate-pulse bg-muted rounded-full h-8 w-32"></div>
-                <div className="animate-pulse bg-muted rounded-full h-8 w-40"></div>
-              </div>
-              <div className="space-y-4">
-                <div className="animate-pulse bg-muted rounded-lg h-12 w-3/4 mx-auto"></div>
-                <div className="animate-pulse bg-muted rounded-lg h-6 w-2/3 mx-auto"></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Tools Grid Skeleton */}
-        <section className="py-12">
-          <div className="container mx-auto px-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array.from({ length: 8 }).map((_, index) => (
-                <div key={index} className="bg-card rounded-lg border p-6 space-y-4">
-                  <div className="animate-pulse bg-muted rounded-lg h-16 w-16"></div>
-                  <div className="space-y-2">
-                    <div className="animate-pulse bg-muted rounded h-4 w-3/4"></div>
-                    <div className="animate-pulse bg-muted rounded h-3 w-full"></div>
-                    <div className="animate-pulse bg-muted rounded h-3 w-5/6"></div>
-                  </div>
-                  <div className="animate-pulse bg-muted rounded h-10 w-full"></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      </div>
-    )
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      toast.success('Tools refreshed successfully!')
+    } catch (error) {
+      toast.error('Failed to refresh tools')
+    } finally {
+      setIsRefreshing(false)
+    }
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-destructive/5 via-background to-destructive/5 py-20">
-          <div className="container mx-auto px-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-center space-y-6"
-            >
-              <div className="flex items-center justify-center gap-4">
-                <AlertCircle className="w-12 h-12 text-destructive" />
-                <h2 className="text-2xl font-bold text-destructive">Loading Error</h2>
-              </div>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                {error}
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button onClick={refreshTools} className="px-8">
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Try Again
-                </Button>
-                <Button variant="outline" onClick={() => window.location.reload()} className="px-8">
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh Page
-                </Button>
-              </div>
-            </motion.div>
-          </div>
-        </section>
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId)
+    
+    // Smooth scroll to tools section
+    const toolsSection = document.getElementById('tools-section')
+    if (toolsSection) {
+      toolsSection.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      })
+    }
+  }
 
-        {/* Quick Access to Popular Tools */}
-        <section className="py-16">
-          <div className="container mx-auto px-6">
-            <h3 className="text-2xl font-bold text-center mb-8">Popular Tools</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredTools.slice(0, 6).map((tool, index) => (
-                <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary/50">
-                  <CardHeader className="text-center">
-                    <tool.icon className="w-12 h-12 mx-auto text-primary" />
-                    <CardTitle className="text-lg">{tool.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground text-center mb-4">
-                      {tool.description}
-                    </p>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => handleToolClick(tool.href)}
-                    >
-                      Open Tool
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-      </div>
-    )
+  const resetAllFilters = () => {
+    setSearchQuery('')
+    setSelectedCategory('all')
+    setShowFeaturedOnly(false)
+    setShowPopularOnly(false)
+    setShowFavoritesOnly(false)
+    setSortBy('name')
+    setSortOrder('asc')
+  }
+
+  const toggleFavorite = (toolName: string) => {
+    setFavorites(prev => {
+      const newFavorites = prev.includes(toolName) 
+        ? prev.filter(name => name !== toolName)
+        : [...prev, toolName]
+      
+      // Save to localStorage
+      localStorage.setItem('tool-favorites', JSON.stringify(newFavorites))
+      
+      return newFavorites
+    })
+  }
+
+  const isFavorite = (toolName: string) => {
+    return favorites.includes(toolName)
+  }
+
+  const trackToolUsage = (toolName: string) => {
+    // Track usage stats
+    setUsageStats(prev => {
+      const newStats = {
+        ...prev,
+        [toolName]: (prev[toolName] || 0) + 1
+      }
+      
+      // Save to localStorage
+      localStorage.setItem('tool-usage-stats', JSON.stringify(newStats))
+      
+      return newStats
+    })
+
+    // Track activity
+    const activity = {
+      toolName,
+      toolHref: `/${tools.find(t => t.name === toolName)?.href || '#'}`,
+      timestamp: new Date().toISOString(),
+      success: true
+    }
+
+    const savedActivity = localStorage.getItem('user-activity')
+    const existingActivity = savedActivity ? JSON.parse(savedActivity) : []
+    
+    // Add new activity to the beginning and keep only last 50
+    const updatedActivity = [activity, ...existingActivity].slice(0, 50)
+    localStorage.setItem('user-activity', JSON.stringify(updatedActivity))
+  }
+
+  const getUsageCount = (toolName: string) => {
+    return usageStats[toolName] || 0
+  }
+
+  const getRecentlyUsedTools = () => {
+    const toolsWithUsage = tools.map(tool => ({
+      ...tool,
+      usageCount: getUsageCount(tool.name)
+    })).filter(tool => tool.usageCount > 0)
+    
+    return toolsWithUsage
+      .sort((a, b) => b.usageCount - a.usageCount)
+      .slice(0, 5)
+  }
+
+  const toggleToolForComparison = (toolName: string) => {
+    setSelectedToolsForComparison(prev => {
+      if (prev.includes(toolName)) {
+        return prev.filter(name => name !== toolName)
+      } else if (prev.length < 3) {
+        return [...prev, toolName]
+      } else {
+        toast.error('You can compare maximum 3 tools at once')
+        return prev
+      }
+    })
+  }
+
+  const isToolSelectedForComparison = (toolName: string) => {
+    return selectedToolsForComparison.includes(toolName)
+  }
+
+  const clearComparison = () => {
+    setSelectedToolsForComparison([])
+    setShowComparison(false)
+  }
+
+  const getToolsForComparison = () => {
+    return tools.filter(tool => selectedToolsForComparison.includes(tool.name))
+  }
+
+  const getToolRating = (toolName: string) => {
+    return toolRatings[toolName] || 0
+  }
+
+  const getToolReviews = (toolName: string) => {
+    return toolReviews[toolName] || []
+  }
+
+  const submitRating = (toolName: string, rating: number) => {
+    setToolRatings(prev => {
+      const newRatings = {
+        ...prev,
+        [toolName]: rating
+      }
+      localStorage.setItem('tool-ratings', JSON.stringify(newRatings))
+      return newRatings
+    })
+  }
+
+  const submitReview = (toolName: string, rating: number, comment: string) => {
+    setToolReviews(prev => {
+      const newReviews = {
+        ...prev,
+        [toolName]: [
+          ...(prev[toolName] || []),
+          {
+            user: 'Anonymous User',
+            rating,
+            comment,
+            date: new Date().toLocaleDateString()
+          }
+        ]
+      }
+      localStorage.setItem('tool-reviews', JSON.stringify(newReviews))
+      return newReviews
+    })
+    
+    // Also update the rating
+    submitRating(toolName, rating)
+    setNewReview('')
+    setShowReviewModal(false)
+    setSelectedToolForReview(null)
+    toast.success('Review submitted successfully!')
+  }
+
+  const openReviewModal = (tool: Tool) => {
+    setSelectedToolForReview(tool)
+    setShowReviewModal(true)
   }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-primary/5 py-20">
-        <div className="container mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center space-y-6"
-          >
-            <div className="flex items-center justify-center gap-4">
-              <Badge variant="secondary" className="text-sm px-4 py-2">
-                <Sparkles className="w-4 h-4 mr-2" />
-                {tools.length}+ Free Online Tools
-              </Badge>
-              {lastRefresh && (
-                <Badge variant="outline" className="text-sm px-4 py-2">
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Updated {lastRefresh.toLocaleTimeString()}
-                </Badge>
+      {/* Header */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Link href="/" className="flex items-center space-x-2">
+                <Zap className="h-6 w-6" />
+                <span className="text-xl font-bold">ToolsHub</span>
+              </Link>
+              <Badge variant="secondary">Beta</Badge>
+            </div>
+            <div className="flex items-center space-x-4">
+              <ThemeToggle />
+              {selectedToolsForComparison.length > 0 && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setShowComparison(true)}
+                >
+                  Compare ({selectedToolsForComparison.length})
+                </Button>
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Filters {showFilters && <span className="ml-1 text-xs">(Active)</span>}
+              </Button>
+              {(searchQuery || selectedCategory !== 'all' || showFeaturedOnly || showPopularOnly || sortBy !== 'name' || showFavoritesOnly || selectedToolsForComparison.length > 0) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    resetAllFilters()
+                    clearComparison()
+                  }}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Reset All
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+              >
+                {viewMode === 'grid' ? <List className="h-4 w-4" /> : <Grid className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="relative"
+                onClick={() => {
+                  toast.info('Keyboard shortcuts: Ctrl+K (search), Ctrl+F (filters), Esc (clear/close)')
+                }}
+              >
+                <kbd className="px-2 py-1 text-xs font-mono bg-muted rounded">?</kbd>
+              </Button>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Browse Our Tools Collection
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Discover powerful tools for SEO, development, design, and productivity. All tools are free, fast, and secure.
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        {/* Search Section */}
+        <section className="mb-8">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold mb-4">Free Online Tools</h1>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Discover and use our collection of free online tools for all your needs. 
+              From developers to designers, we've got you covered.
             </p>
-          </motion.div>
-        </div>
-      </section>
+          </div>
+          
+          <div className="max-w-2xl mx-auto mb-8">
+            <AdvancedSearch
+              tools={tools}
+              onSelect={handleToolClick}
+              onSearch={(query, results) => {
+                setSearchQuery(query)
+                console.log(`Search: "${query}" - ${results.length} results`)
+              }}
+            />
+          </div>
 
-      {/* Controls Section */}
-      <section className="py-8 bg-background/50 border-b">
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-              <div className="relative w-full sm:w-80">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="Search tools..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+          {/* Comprehensive Filters Panel */}
+          {showFilters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-muted/50 rounded-lg p-6 mb-8 border"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Category Filter */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Category</label>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.filter(c => c.id !== 'all').map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name} ({category.count})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Sort By */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Sort By</label>
+                  <Select value={sortBy} onValueChange={(value: 'name' | 'popularity' | 'featured') => setSortBy(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name">Name</SelectItem>
+                      <SelectItem value="popularity">Popularity</SelectItem>
+                      <SelectItem value="featured">Featured</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Sort Order */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Order</label>
+                  <Select value={sortOrder} onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="asc">Ascending</SelectItem>
+                      <SelectItem value="desc">Descending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Quick Filters */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Quick Filters</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showFeaturedOnly}
+                        onChange={(e) => setShowFeaturedOnly(e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                      <span className="text-sm">Featured only</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showPopularOnly}
+                        onChange={(e) => setShowPopularOnly(e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                      <span className="text-sm">Popular only</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showFavoritesOnly}
+                        onChange={(e) => setShowFavoritesOnly(e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                      <span className="text-sm">Favorites only</span>
+                    </label>
+                  </div>
+                </div>
               </div>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      <div className="flex items-center gap-2">
-                        <category.icon className="w-4 h-4" />
-                        <span>{category.name}</span>
-                        <span className="text-muted-foreground text-sm">({category.count})</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-              >
-                <List className="w-4 h-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={refreshTools}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+            </motion.div>
+          )}
+        </section>
 
-      {/* Featured Tools */}
-      <section className="py-16">
-        <div className="container mx-auto px-6">
-          <h2 className="text-3xl font-bold mb-8">Featured Tools</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {featuredTools.map((tool, index) => (
-              <motion.div
-                key={tool.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+        {/* Categories Section */}
+        <section className="mb-12">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold mb-2">Browse by Category</h2>
+            <p className="text-muted-foreground">
+              Click on a category to filter tools
+            </p>
+          </div>
+          
+          <CategoryNavigation
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onCategorySelect={handleCategorySelect}
+            className="mb-8"
+          />
+        </section>
+
+        {/* Recently Used Tools Section */}
+        {getRecentlyUsedTools().length > 0 && (
+          <section className="mb-12">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">Recently Used</h2>
+                <p className="text-muted-foreground">
+                  Your most frequently used tools
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  localStorage.removeItem('tool-usage-stats')
+                  setUsageStats({})
+                  toast.success('Usage statistics cleared')
+                }}
               >
-                <Link href={tool.href}>
-                  <Card className="h-full hover:shadow-lg transition-all duration-300 cursor-pointer border-2 hover:border-primary/20">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <tool.icon className="w-8 h-8 text-primary" />
-                        <div className="flex space-x-1">
-                          {tool.featured && <Badge variant="secondary">Featured</Badge>}
-                          {tool.popular && <Badge variant="default">Popular</Badge>}
+                Clear Stats
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+              {getRecentlyUsedTools().map((tool, index) => {
+                const IconComponent = tool.icon
+                return (
+                  <motion.div
+                    key={tool.name}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                  >
+                    <Card 
+                      className="h-full cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                      onClick={() => handleToolClick(tool)}
+                    >
+                      <CardContent className="p-4 text-center">
+                        <div className="flex justify-center mb-3">
+                          <div className="p-3 rounded-lg bg-muted">
+                            <IconComponent className="h-6 w-6" />
+                          </div>
                         </div>
-                      </div>
-                      <CardTitle className="text-lg">{tool.name}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription>{tool.description}</CardDescription>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+                        <h3 className="font-semibold text-sm mb-1 truncate">
+                          {tool.name}
+                        </h3>
+                        <div className="flex items-center justify-center space-x-1">
+                          <Zap className="h-3 w-3 text-primary" />
+                          <span className="text-xs text-muted-foreground">
+                            {tool.usageCount} {tool.usageCount === 1 ? 'use' : 'uses'}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )
+              })}
+            </div>
+          </section>
+        )}
 
-      {/* All Tools */}
-      <section className="py-16">
-        <div className="container mx-auto px-6">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold">
-              All Tools
-              <span className="text-lg text-muted-foreground ml-2">({filteredTools.length} found)</span>
-            </h2>
-          </div>
-
-          {filteredTools.length === 0 ? (
-            <div className="text-center py-16">
-              <Search className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No tools found</h3>
-              <p className="text-muted-foreground mb-4">
-                Try adjusting your search or category filter
+        {/* Tools Section */}
+        <section id="tools-section">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold">
+                {selectedCategory === 'all' ? 'All Tools' : categories.find(c => c.id === selectedCategory)?.name}
+              </h2>
+              <p className="text-muted-foreground">
+                {filteredTools.length} {filteredTools.length === 1 ? 'tool' : 'tools'} found
               </p>
-              <Button onClick={() => {
-                setSearchQuery('')
-                setSelectedCategory('all')
-              }}>
-                Clear Filters
+            </div>
+            <Button
+              variant="outline"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Refresh
+            </Button>
+          </div>
+
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-card rounded-lg border p-6 animate-pulse">
+                  <div className="flex items-start space-x-3 mb-4">
+                    <div className="p-2 rounded-lg bg-muted">
+                      <div className="h-5 w-5 bg-muted-foreground/20 rounded"></div>
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-muted-foreground/20 rounded w-3/4"></div>
+                      <div className="h-3 bg-muted-foreground/10 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="h-3 bg-muted-foreground/10 rounded"></div>
+                    <div className="h-3 bg-muted-foreground/10 rounded w-5/6"></div>
+                    <div className="h-3 bg-muted-foreground/10 rounded w-4/6"></div>
+                  </div>
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                    <div className="h-6 bg-muted-foreground/10 rounded w-16"></div>
+                    <div className="h-8 bg-muted-foreground/10 rounded w-20"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredTools.length === 0 ? (
+            <div className="text-center py-12">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No tools found</h3>
+              <p className="text-muted-foreground mb-4">
+                Try adjusting your search or selecting a different category
+              </p>
+              <Button onClick={resetAllFilters}>
+                Clear filters
               </Button>
             </div>
           ) : (
             <div className={
               viewMode === 'grid' 
-                ? 'grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-                : 'space-y-4'
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                : "space-y-4"
             }>
-              <AnimatePresence>
-                {filteredTools.map((tool, index) => (
-                  <motion.div
-                    key={tool.href}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.02 }}
-                    layout
-                  >
-                    <Link href={tool.href} onClick={() => handleToolClick(tool.href)}>
-                      {viewMode === 'grid' ? (
-                        <Card className="h-full hover:shadow-lg transition-all duration-300 cursor-pointer border-2 hover:border-primary/20">
-                          <CardHeader>
-                            <div className="flex items-center justify-between">
-                              <tool.icon className="w-8 h-8 text-primary" />
-                              <div className="flex space-x-1">
-                                {tool.featured && <Badge variant="secondary" className="text-xs">Featured</Badge>}
-                                {tool.popular && <Badge variant="default" className="text-xs">Popular</Badge>}
+              <AnimatePresence mode="wait">
+                {filteredTools.map((tool, index) => {
+                  const IconComponent = tool.icon
+                  return (
+                    <motion.div
+                      key={tool.name}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3 }}
+                      layout
+                      data-tool-card
+                      tabIndex={0}
+                      className="outline-none"
+                    >
+                      <Card 
+                        className={`h-full cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
+                          tool.featured ? 'ring-2 ring-primary/20' : ''
+                        }`}
+                        onClick={() => handleToolClick(tool)}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center space-x-3">
+                              <div className="p-2 rounded-lg bg-muted">
+                                <IconComponent className="h-5 w-5" />
                               </div>
-                            </div>
-                            <CardTitle className="text-lg leading-tight">{tool.name}</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <CardDescription className="text-sm leading-relaxed">
-                              {tool.description}
-                            </CardDescription>
-                          </CardContent>
-                        </Card>
-                      ) : (
-                        <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer border-2 hover:border-primary/20">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <tool.icon className="w-6 h-6 text-primary" />
-                                <div>
-                                  <h3 className="font-semibold">{tool.name}</h3>
-                                  <p className="text-sm text-muted-foreground">{tool.description}</p>
+                              <div className="flex-1 min-w-0">
+                                <CardTitle className="text-lg leading-tight truncate">
+                                  {tool.name}
+                                </CardTitle>
+                                <div className="flex items-center space-x-2 mt-1">
+                                  {tool.featured && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      <Star className="h-3 w-3 mr-1" />
+                                      Featured
+                                    </Badge>
+                                  )}
+                                  {tool.popular && (
+                                    <Badge variant="outline" className="text-xs">
+                                      <TrendingUp className="h-3 w-3 mr-1" />
+                                      Popular
+                                    </Badge>
+                                  )}
+                                  {getUsageCount(tool.name) > 0 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      <Zap className="h-3 w-3 mr-1" />
+                                      {getUsageCount(tool.name)} uses
+                                    </Badge>
+                                  )}
+                                  {getToolRating(tool.name) > 0 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      <Star className="h-3 w-3 mr-1 text-yellow-500 fill-current" />
+                                      {getToolRating(tool.name)}/5
+                                    </Badge>
+                                  )}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="text-xs">
-                                  {tool.category}
-                                </Badge>
-                                <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                              </div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                    </Link>
-                  </motion.div>
-                ))}
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  openReviewModal(tool)
+                                }}
+                                className="p-1 h-auto text-muted-foreground hover:text-foreground"
+                                title="Rate & Review"
+                              >
+                                <Star className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  toggleToolForComparison(tool.name)
+                                }}
+                                className={`p-1 h-auto ${
+                                  isToolSelectedForComparison(tool.name) 
+                                    ? 'text-primary bg-primary/10' 
+                                    : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                                disabled={selectedToolsForComparison.length >= 3 && !isToolSelectedForComparison(tool.name)}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isToolSelectedForComparison(tool.name)}
+                                  onChange={() => {}}
+                                  className="sr-only"
+                                />
+                                {isToolSelectedForComparison(tool.name) ? (
+                                  <CheckCircle className="h-4 w-4" />
+                                ) : (
+                                  <div className="h-4 w-4 border-2 border-muted-foreground rounded" />
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  toggleFavorite(tool.name)
+                                }}
+                                className={`p-1 h-auto ${
+                                  isFavorite(tool.name) 
+                                    ? 'text-yellow-500 hover:text-yellow-600' 
+                                    : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                              >
+                                <Star 
+                                  className={`h-4 w-4 ${
+                                    isFavorite(tool.name) ? 'fill-current' : ''
+                                  }`} 
+                                />
+                              </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <CardDescription className="text-sm leading-relaxed mb-4">
+                            {tool.description}
+                          </CardDescription>
+                          <div className="flex items-center justify-between">
+                            <Badge variant="outline" className="text-xs">
+                              {tool.category}
+                            </Badge>
+                            <Button variant="ghost" size="sm">
+                              Open
+                              <ArrowRight className="h-4 w-4 ml-2" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  )
+                })}
               </AnimatePresence>
             </div>
           )}
+        </section>
+
+        {/* Comparison Modal */}
+        {showComparison && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowComparison(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-background rounded-lg border max-w-6xl w-full max-h-[90vh] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 border-b">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Compare Tools</h2>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearComparison}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-muted-foreground mt-1">
+                  Comparing {getToolsForComparison().length} tools
+                </p>
+              </div>
+              
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {getToolsForComparison().map((tool, index) => {
+                    const IconComponent = tool.icon
+                    return (
+                      <div key={tool.name} className="border rounded-lg p-4">
+                        <div className="flex items-center space-x-3 mb-4">
+                          <div className="p-2 rounded-lg bg-muted">
+                            <IconComponent className="h-6 w-6" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">{tool.name}</h3>
+                            <Badge variant="outline" className="text-xs mt-1">
+                              {tool.category}
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          <div>
+                            <h4 className="text-sm font-medium mb-1">Description</h4>
+                            <p className="text-sm text-muted-foreground">{tool.description}</p>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Featured:</span>
+                              <div className="font-medium">
+                                {tool.featured ? (
+                                  <Badge variant="secondary" className="text-xs">Yes</Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-xs">No</Badge>
+                                )}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Popular:</span>
+                              <div className="font-medium">
+                                {tool.popular ? (
+                                  <Badge variant="outline" className="text-xs">Yes</Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-xs">No</Badge>
+                                )}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Uses:</span>
+                              <div className="font-medium">{getUsageCount(tool.name)}</div>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Favorites:</span>
+                              <div className="font-medium">{favorites.filter(name => name === tool.name).length > 0 ? 'Yes' : 'No'}</div>
+                            </div>
+                          </div>
+                          
+                          <Button
+                            className="w-full"
+                            onClick={() => {
+                              handleToolClick(tool)
+                              setShowComparison(false)
+                            }}
+                          >
+                            Open Tool
+                          </Button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Review Modal */}
+        {showReviewModal && selectedToolForReview && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowReviewModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-background rounded-lg border max-w-md w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 border-b">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold">Rate & Review</h2>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowReviewModal(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-muted-foreground mt-1">
+                  {selectedToolForReview.name}
+                </p>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Your Rating</label>
+                  <div className="flex space-x-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => setNewRating(star)}
+                        className="p-1 hover:scale-110 transition-transform"
+                      >
+                        <Star 
+                          className={`h-6 w-6 ${
+                            star <= newRating 
+                              ? 'text-yellow-500 fill-current' 
+                              : 'text-muted-foreground'
+                          }`} 
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Your Review</label>
+                  <textarea
+                    value={newReview}
+                    onChange={(e) => setNewReview(e.target.value)}
+                    placeholder="Share your experience with this tool..."
+                    className="w-full p-3 border rounded-md resize-none min-h-[100px]"
+                    maxLength={500}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {newReview.length}/500 characters
+                  </p>
+                </div>
+                
+                <div className="flex space-x-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowReviewModal(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => submitReview(selectedToolForReview.name, newRating, newReview)}
+                    disabled={!newReview.trim()}
+                    className="flex-1"
+                  >
+                    Submit Review
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Stats Section */}
+        <section className="mt-16 pt-16 border-t">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div>
+              <div className="text-3xl font-bold text-primary">{tools.length}</div>
+              <div className="text-sm text-muted-foreground">Total Tools</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-primary">{categories.length - 1}</div>
+              <div className="text-sm text-muted-foreground">Categories</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-primary">
+                {tools.filter(t => t.featured).length}
+              </div>
+              <div className="text-sm text-muted-foreground">Featured</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-primary">
+                {Object.keys(usageStats).length}
+              </div>
+              <div className="text-sm text-muted-foreground">Tracked Tools</div>
+            </div>
+          </div>
+          
+          {/* Usage Statistics */}
+          <div className="mt-8 p-6 bg-muted/30 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4">Usage Statistics</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-primary">
+                  {Object.values(usageStats).reduce((sum, count) => sum + count, 0)}
+                </div>
+                <div className="text-muted-foreground">Total Uses</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-primary">
+                  {getRecentlyUsedTools().length}
+                </div>
+                <div className="text-muted-foreground">Frequently Used</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-primary">
+                  {Math.round((Object.keys(usageStats).length / tools.length) * 100)}%
+                </div>
+                <div className="text-muted-foreground">Tools Tracked</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-muted/50 mt-16">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-sm text-muted-foreground">
+            <p>&copy; 2024 ToolsHub. All rights reserved.</p>
+          </div>
         </div>
-      </section>
+      </footer>
     </div>
   )
 }

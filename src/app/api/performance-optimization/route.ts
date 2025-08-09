@@ -86,7 +86,7 @@ async function performPerformanceAnalysis(url: string): Promise<PerformanceRespo
           fcp: Math.floor(Math.random() * 1200) + 800, // 800-2000ms
           lcp: Math.floor(Math.random() * 2000) + 1500, // 1500-3500ms
           fid: Math.floor(Math.random() * 150) + 50, // 50-200ms
-          cls: (Math.random() * 0.25).toFixed(3), // 0-0.25
+          cls: parseFloat((Math.random() * 0.25).toFixed(3)), // 0-0.25
           ttfb: Math.floor(Math.random() * 400) + 100, // 100-500ms
           suggestions: generateLoadingSuggestions()
         },

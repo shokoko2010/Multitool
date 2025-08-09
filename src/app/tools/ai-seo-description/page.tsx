@@ -137,7 +137,7 @@ export default function AISEODescriptionGenerator() {
                           className="shrink-0"
                         >
                           <Copy className="h-4 w-4" />
-                          {copied === description ? 'Copied!' : 'Copy'}
+                          {copied[0] ? 'Copied!' : 'Copy'}
                         </Button>
                       </div>
                     </div>

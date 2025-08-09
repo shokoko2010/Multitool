@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Calculator, History, RotateCcw, Copy, Download } from 'lucide-react'
+import { Calculator as CalculatorIcon, History, RotateCcw, Copy, Download } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 interface HistoryItem {
@@ -16,6 +16,7 @@ interface HistoryItem {
 }
 
 export default function Calculator() {
+  const { toast } = useToast()
   const [display, setDisplay] = useState('0')
   const [previousValue, setPreviousValue] = useState<number | null>(null)
   const [operation, setOperation] = useState<string | null>(null)
@@ -235,9 +236,8 @@ export default function Calculator() {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(display)
     toast({
-      title: "Copied to clipboard",
-      description: "Calculator result has been copied"
-    })
+          title: "Calculator result has been copied"
+        })
   }
 
   const downloadHistory = () => {
@@ -259,9 +259,8 @@ ${history.map((item, index) =>
     URL.revokeObjectURL(url)
     
     toast({
-      title: "Download started",
-      description: "Calculator history download has started"
-    })
+          title: "Calculator history download has started"
+        })
   }
 
   const clearHistory = () => {
@@ -301,7 +300,7 @@ ${history.map((item, index) =>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Calculator className="w-5 h-5" />
+                <CalculatorIcon className="w-5 h-5" />
                 Calculator
               </CardTitle>
               <CardDescription>

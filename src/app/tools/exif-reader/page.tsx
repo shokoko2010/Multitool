@@ -107,7 +107,7 @@ export default function EXIFReader() {
           }
         }
 
-        setEXIFData(mockEXIFData)
+        setExifData(mockEXIFData)
         
         toast({
           title: "Success!",
@@ -142,7 +142,7 @@ export default function EXIFReader() {
   const removeSelectedImage = () => {
     setSelectedImage(null)
     setPreviewUrl('')
-    setEXIFData({})
+    setExifData({})
     setHasError(false)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''

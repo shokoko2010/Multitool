@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { Upload, Download, RotateCcw, Volume2, FileAudio } from 'lucide-react'
+import { toast } from 'sonner'
 import { useToast } from '@/hooks/use-toast'
 
 export default function AudioConverter() {
@@ -29,11 +30,7 @@ export default function AudioConverter() {
     if (!file) return
 
     if (!file.type.startsWith('audio/')) {
-      toast({
-        title: "Invalid file type",
-        description: "Please select an audio file",
-        variant: "destructive"
-      })
+      toast.error("Invalid file type: Please select an audio file")
       return
     }
 
@@ -52,11 +49,7 @@ export default function AudioConverter() {
 
   const convertAudio = () => {
     if (!audioFile) {
-      toast({
-        title: "No file selected",
-        description: "Please select an audio file to convert",
-        variant: "destructive"
-      })
+      toast.error("No file selected: Please select an audio file to convert")
       return
     }
 
@@ -77,17 +70,10 @@ export default function AudioConverter() {
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
         
-        toast({
-          title: "Audio converted successfully",
-          description: `File converted to ${outputFormat.toUpperCase()} format`
-        })
+        toast.success(`Audio converted successfully: File converted to ${outputFormat.toUpperCase()} format`)
       }, 2000)
     } catch (error) {
-      toast({
-        title: "Conversion failed",
-        description: "Unable to convert the audio file",
-        variant: "destructive"
-      })
+      toast.error("Conversion failed: Unable to convert the audio file")
     } finally {
       setLoading(false)
     }

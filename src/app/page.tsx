@@ -4,20 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Search, Globe, Shield, Code, Image, Palette, Calculator, Hash, Link, Database, FileText, Zap, GitCompare, BarChart3, Key, Volume2, Video, Monitor, Wifi, HardDrive, Cpu, Hash as HashIcon, Dice6, Calendar, QrCode, BarChart3 as BarcodeIcon, Upload, Settings, Binary, FileCode, Download, CheckCircle, Brain, Star, TrendingUp, Users, Zap as ZapIcon, ArrowRight, Sparkles, Grid3X3 } from 'lucide-react'
+import { Search, Globe, Shield, Code, Image, Palette, Calculator, Hash, Link, Database, FileText, Zap, GitCompare, BarChart3, Key, Volume2, Video, Monitor, Wifi, HardDrive, Cpu, Hash as HashIcon, Dice6, Calendar, QrCode, BarChart3 as BarcodeIcon, Upload, Settings, Binary, FileCode, Download, CheckCircle, Brain, Star, TrendingUp, Users, Zap as ZapIcon, ArrowRight, Sparkles, Grid3X3 as GridIcon3 } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from 'next-themes'
-
-interface Tool {
-  name: string
-  href: string
-  description: string
-  category: string
-  icon: any
-  featured?: boolean
-  popular?: boolean
-}
+import { useKeyboardShortcut } from '@/hooks/use-keyboard-shortcut'
+import { LazyEnhancedToolsSearch } from '@/components/lazy-enhanced-tools-search'
+import { X } from 'lucide-react'
+import { Tool } from '@/types/tool'
+import { toolsData, getAllCategories, getToolsByCategory } from '@/data/tools'
 
 export default function Home() {
   const { theme } = useTheme()
@@ -26,8 +21,9 @@ export default function Home() {
   const [tools, setTools] = useState<Tool[]>([])
   const [filteredTools, setFilteredTools] = useState<Tool[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [showSearch, setShowSearch] = useState(false)
   const [categories, setCategories] = useState([
-    { id: 'all', name: 'All Tools', count: 0, icon: Grid3X3 },
+    { id: 'all', name: 'All Tools', count: 0, icon: GridIcon3 },
     { id: 'network', name: 'Network Tools', count: 0, icon: Globe, description: 'Diagnostics and analysis utilities' },
     { id: 'security', name: 'Security Tools', count: 0, icon: Shield, description: 'Vulnerability checking and security analysis' },
     { id: 'text', name: 'Text Utilities', count: 0, icon: Code, description: 'Text processing and manipulation' },
@@ -38,6 +34,18 @@ export default function Home() {
     { id: 'converters', name: 'Converters', count: 0, icon: Calculator, description: 'Unit and data conversion tools' },
     { id: 'cryptography', name: 'Cryptography', count: 0, icon: Hash, description: 'Encryption and hashing utilities' },
   ])
+
+  // Keyboard shortcut for search (Ctrl+K or Cmd+K)
+  useKeyboardShortcut(
+    { key: 'k', ctrlKey: true, metaKey: true },
+    () => setShowSearch(true)
+  )
+
+  // Keyboard shortcut to close search (Escape)
+  useKeyboardShortcut(
+    { key: 'Escape' },
+    () => setShowSearch(false)
+  )
 
   // Featured tools for hero section
   const featuredTools: Tool[] = [
@@ -419,6 +427,19 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-primary/5 py-20">
         <div className="container mx-auto px-6">
+          <div className="flex items-center justify-between mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Link href="/dashboard" className="inline-flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors">
+                <BarChart3 className="h-5 w-5" />
+                <span className="font-medium">View Dashboard</span>
+              </Link>
+            </motion.div>
+          </div>
+          
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -680,12 +701,60 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+      
+      {/* Enhanced Search Modal */}
+      <AnimatePresence>
+        {showSearch && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50"
+              onClick={() => setShowSearch(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
+            >
+              <div className="w-full max-w-2xl">
+                <div className="bg-background border border-border rounded-lg shadow-xl">
+                  <div className="p-4 border-b border-border">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Search className="h-5 w-5" />
+                        Search Tools
+                        <Badge variant="secondary" className="text-xs">
+                          Press Ctrl+K
+                        </Badge>
+                      </h3>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowSearch(false)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <LazyEnhancedToolsSearch />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
 
 // Helper component for grid icon
-function Grid3X3() {
+function GridIcon() {
   return (
     <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />

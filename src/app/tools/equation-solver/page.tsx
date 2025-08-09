@@ -12,12 +12,13 @@ import { useToast } from '@/hooks/use-toast'
 
 interface EquationSolution {
   equation: string
-  solution: string | number | { x: number; y: number }
+  solution: string | number | { x1: number; x2: number } | { x: number; y: number }
   steps: string[]
   type: 'linear' | 'quadratic' | 'system' | 'inequality'
 }
 
 export default function EquationSolver() {
+  const { toast } = useToast()
   const [equation, setEquation] = useState('')
   const [equationType, setEquationType] = useState('linear')
   const [solutions, setSolutions] = useState<EquationSolution[]>([])
@@ -134,8 +135,8 @@ export default function EquationSolver() {
         const realPart = -b / (2 * a)
         const imaginaryPart = Math.sqrt(-discriminant) / (2 * a)
         solution = { 
-          real: realPart, 
-          imaginary: imaginaryPart 
+          x1: realPart, 
+          x2: -imaginaryPart 
         }
         steps.push(`Two complex solutions:`)
         steps.push(`x₁ = ${realPart} + ${imaginaryPart}i`)
@@ -204,10 +205,8 @@ export default function EquationSolver() {
   const solveEquation = () => {
     if (!equation.trim()) {
       toast({
-        title: "Missing equation",
-        description: "Please enter an equation to solve",
-        variant: "destructive"
-      })
+          title: "Please enter an equation to solve"
+        })
       return
     }
 
@@ -241,17 +240,14 @@ export default function EquationSolver() {
       setStepByStep(solution.steps)
       setCurrentStep(0)
       
-      toast({
-        title: "Equation solved",
-        description: `Found solution for ${equationType} equation`
-      })
+          toast({
+          title: `Found solution for ${equationType} equation`
+        })
     } catch (error) {
       setError("Unable to solve the equation. Please check the format.")
       toast({
-        title: "Solving failed",
-        description: "Unable to solve the equation",
-        variant: "destructive"
-      })
+          title: "Unable to solve the equation"
+        })
     } finally {
       setLoading(false)
     }
@@ -268,9 +264,8 @@ ${solution.steps.map((step, index) => `${index + 1}. ${step}`).join('\n')}`
 
     navigator.clipboard.writeText(solutionText)
     toast({
-      title: "Copied to clipboard",
-      description: "Equation solution has been copied"
-    })
+          title: "Equation solution has been copied"
+        })
   }
 
   const downloadSolutions = () => {
@@ -299,9 +294,8 @@ ${index + 1}. ${solution.equation}
     URL.revokeObjectURL(url)
     
     toast({
-      title: "Download started",
-      description: "Equation solutions download has started"
-    })
+          title: "Equation solutions download has started"
+        })
   }
 
   const clearSolutions = () => {

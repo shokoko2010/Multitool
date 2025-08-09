@@ -71,7 +71,7 @@ export default function FileJoiner() {
       let processedSize = 0
 
       // Create a blob to hold the merged content
-      const mergedContent = []
+      const mergedContent: string[] = []
       
       for (let i = 0; i < files.length; i++) {
         const fileItem = files[i]

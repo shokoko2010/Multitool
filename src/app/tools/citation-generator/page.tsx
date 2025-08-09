@@ -25,6 +25,7 @@ interface SourceData {
   pages: string
   volume: string
   issue: string
+  section?: string
   type: 'book' | 'website' | 'article' | 'journal' | 'newspaper' | 'film'
 }
 
@@ -41,6 +42,7 @@ export default function CitationGenerator() {
     pages: '',
     volume: '',
     issue: '',
+    section: '',
     type: 'website'
   })
   const [citations, setCitations] = useState<Citation | null>(null)
@@ -85,9 +87,9 @@ export default function CitationGenerator() {
     } else if (type === 'article') {
       citation += `${container}, ${date}, ${url}.`
     } else if (type === 'journal') {
-      citation += `${container} ${volume}${sourceData.issue ? `, no. ${sourceData.issue}` : ''} (${date}): ${pages}.`
+      citation += `${container} ${sourceData.volume}${sourceData.issue ? `, no. ${sourceData.issue}` : ''} (${date}): ${sourceData.pages}.`
     } else if (type === 'newspaper') {
-      citation += `${container}, ${date}, ${pages}.`
+      citation += `${container}, ${date}, ${sourceData.pages}.`
     } else if (type === 'film') {
       citation += `Directed by ${author}. ${publisher}, ${date}.`
     }
@@ -120,9 +122,9 @@ export default function CitationGenerator() {
     } else if (type === 'article') {
       citation += `${container}, ${date.split(', ')[0]}. ${url}`
     } else if (type === 'journal') {
-      citation += `${container}, ${volume}(${sourceData.issue}), ${pages}. https://doi.org/${sourceData.doi}`
+      citation += `${container}, ${sourceData.volume}(${sourceData.issue}), ${sourceData.pages}. https://doi.org/${sourceData.doi}`
     } else if (type === 'newspaper') {
-      citation += `${container}, ${date}, ${pages}.`
+      citation += `${container}, ${date}, ${sourceData.pages}.`
     } else if (type === 'film') {
       citation += `Film. ${publisher}.`
     }
@@ -148,9 +150,9 @@ export default function CitationGenerator() {
     } else if (type === 'article') {
       citation += `In ${container}, ${date}. ${url}.`
     } else if (type === 'journal') {
-      citation += `${container} ${volume}${sourceData.issue ? `, no. ${sourceData.issue}` : ''} (${date}): ${pages}.`
+      citation += `${container} ${sourceData.volume}${sourceData.issue ? `, no. ${sourceData.issue}` : ''} (${date}): ${sourceData.pages}.`
     } else if (type === 'newspaper') {
-      citation += `${container}, ${date}, ${section} ${pages}.`
+      citation += `${container}, ${date}, ${sourceData.section || 'section'} ${sourceData.pages}.`
     } else if (type === 'film') {
       citation += `Directed by ${author}. ${publisher}, ${date}.`
     }
@@ -176,9 +178,9 @@ export default function CitationGenerator() {
     } else if (type === 'article') {
       citation += `${container}, ${date.split(', ')[0]}.`
     } else if (type === 'journal') {
-      citation += `${container}, ${volume}(${sourceData.issue}), pp. ${pages}.`
+      citation += `${container}, ${sourceData.volume}(${sourceData.issue}), pp. ${sourceData.pages}.`
     } else if (type === 'newspaper') {
-      citation += `${container}, ${date}, p. ${pages}.`
+      citation += `${container}, ${date}, p. ${sourceData.pages}.`
     } else if (type === 'film') {
       citation += `Directed by ${author}. ${publisher}, ${date}.`
     }

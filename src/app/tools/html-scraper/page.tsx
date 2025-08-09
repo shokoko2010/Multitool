@@ -185,7 +185,7 @@ export default function HtmlScraper() {
           content += '=== TABLES ===\n'
           scrapedData.tables.forEach((table, i) => {
             content += `Table ${i + 1}:\n`
-            table.forEach(row => content += `  ${row.join(', ')}\n`)
+            table.forEach((row: string[]) => content += `  ${row.join(', ')}\n`)
             content += '\n'
           })
         }
@@ -538,7 +538,7 @@ export default function HtmlScraper() {
                             <table className="w-full border-collapse border border-gray-300">
                               <thead>
                                 <tr>
-                                  {table[0]?.map((header, cellIndex) => (
+                                  {(table[0] as string[])?.map((header, cellIndex) => (
                                     <th key={cellIndex} className="border border-gray-300 p-2 bg-gray-50 text-left">
                                       {header}
                                     </th>
@@ -546,7 +546,7 @@ export default function HtmlScraper() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {table.slice(1).map((row, rowIndex) => (
+                                {(table.slice(1) as string[][]).map((row, rowIndex) => (
                                   <tr key={rowIndex}>
                                     {row.map((cell, cellIndex) => (
                                       <td key={cellIndex} className="border border-gray-300 p-2">

@@ -84,7 +84,7 @@ async function performSEOAnalysis(url: string): Promise<SEOAuditResponse['data']
           score: Math.floor(Math.random() * 30) + 70,
           lcp: Math.floor(Math.random() * 2000) + 1500,
           fid: Math.floor(Math.random() * 100) + 50,
-          cls: (Math.random() * 0.3).toFixed(3),
+          cls: parseFloat((Math.random() * 0.3).toFixed(3)),
           recommendations: generatePerformanceRecommendations()
         },
         seo: {
@@ -109,7 +109,12 @@ async function performSEOAnalysis(url: string): Promise<SEOAuditResponse['data']
 }
 
 function generateTechnicalIssues() {
-  const issues = []
+  const issues: Array<{
+    type: 'error' | 'warning' | 'info';
+    title: string;
+    description: string;
+    fix: string;
+  }> = []
   
   // Randomly select issues
   if (Math.random() > 0.5) {
@@ -170,7 +175,12 @@ function generatePerformanceRecommendations() {
 }
 
 function generateSEOIssues() {
-  const issues = []
+  const issues: Array<{
+    type: 'error' | 'warning' | 'info';
+    title: string;
+    description: string;
+    fix: string;
+  }> = []
   
   if (Math.random() > 0.4) {
     issues.push({
@@ -212,7 +222,12 @@ function generateSEOIssues() {
 }
 
 function generateAccessibilityIssues() {
-  const issues = []
+  const issues: Array<{
+    type: 'error' | 'warning' | 'info';
+    title: string;
+    description: string;
+    fix: string;
+  }> = []
   
   if (Math.random() > 0.5) {
     issues.push({
@@ -245,7 +260,12 @@ function generateAccessibilityIssues() {
 }
 
 function generateContentIssues() {
-  const issues = []
+  const issues: Array<{
+    type: 'error' | 'warning' | 'info';
+    title: string;
+    description: string;
+    fix: string;
+  }> = []
   
   if (Math.random() > 0.4) {
     issues.push({

@@ -269,7 +269,7 @@ export default function DNSLookupTool() {
                               {record.value}
                             </code>
                             {record.priority && (
-                              <Badge variant="outline ml-2">Priority: {record.priority}</Badge>
+                              <Badge variant="outline" className="ml-2">Priority: {record.priority}</Badge>
                             )}
                           </div>
                         </div>

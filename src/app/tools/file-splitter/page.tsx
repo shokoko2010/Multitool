@@ -96,7 +96,7 @@ export default function FileSplitter() {
     try {
       const text = await file.text()
       const lines = text.split('\n')
-      const chunks = []
+      const chunks: string[] = []
       
       for (let i = 0; i < lines.length; i += lineCount) {
         chunks.push(lines.slice(i, i + lineCount).join('\n'))

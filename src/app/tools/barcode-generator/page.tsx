@@ -15,7 +15,7 @@ interface BarcodeConfig {
   width: number
   height: number
   textSize: number
-    format: 'png' | 'svg' | 'jpg'
+  outputFormat: 'png' | 'svg' | 'jpg'
 }
 
 const barcodeFormats = [
@@ -48,7 +48,7 @@ export default function BarcodeGeneratorTool() {
     width: 2,
     height: 100,
     textSize: 12,
-    format: 'svg'
+    outputFormat: 'svg'
   })
   const [generatedBarcode, setGeneratedBarcode] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -89,7 +89,7 @@ export default function BarcodeGeneratorTool() {
     // Create barcode pattern based on text
     const barWidth = width
     const totalWidth = text.length * barWidth * 3
-    const pattern = []
+    const pattern: string[] = []
     
     // Generate alternating pattern based on character codes
     for (let i = 0; i < text.length; i++) {
@@ -101,7 +101,7 @@ export default function BarcodeGeneratorTool() {
         const barHeight = j === 1 ? height : height * 0.7
         const xPos = i * barWidth * 3 + j * barWidth
         
-        pattern.push(`
+        pattern.push(String.raw`
           <rect 
             x="${xPos}" 
             y="${(height - barHeight) / 2}" 
@@ -265,7 +265,7 @@ export default function BarcodeGeneratorTool() {
             {/* Format Selection */}
             <div className="space-y-2">
               <Label>Output Format</Label>
-              <Select value={barcodeConfig.format} onValueChange={(value: 'png' | 'svg' | 'jpg') => setBarcodeConfig(prev => ({ ...prev, format: value }))}>
+              <Select value={barcodeConfig.outputFormat} onValueChange={(value: 'png' | 'svg' | 'jpg') => setBarcodeConfig(prev => ({ ...prev, outputFormat: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -294,7 +294,7 @@ export default function BarcodeGeneratorTool() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
-                <Image className="h-5 w-5" alt="Generated barcode" />
+                <Image className="h-5 w-5" alt="" />
                 Generated Barcode
               </span>
               {generatedBarcode && (

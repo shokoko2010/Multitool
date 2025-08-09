@@ -35,6 +35,7 @@ export default function IPLocation() {
   const [geolocationData, setGeolocationData] = useState<GeolocationData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
   const getCurrentIP = async () => {
     setLoading(true)

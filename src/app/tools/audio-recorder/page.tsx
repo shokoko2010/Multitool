@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Slider } from '@/components/ui/slider'
-import { Mic, MicOff, Square, Play, Pause, Download, RotateCcw, Volume2 } from 'lucide-react'
+import { Mic, MicOff, Square, Play, Pause, Download, RotateCcw, Volume2, Square as StopIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 interface Recording {
@@ -21,6 +21,7 @@ interface Recording {
 }
 
 export default function AudioRecorder() {
+  const { toast } = useToast()
   const [isRecording, setIsRecording] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [recordings, setRecordings] = useState<Recording[]>([])
@@ -55,16 +56,16 @@ export default function AudioRecorder() {
       const recorder = new MediaRecorder(stream, options)
       
       mediaRecorderRef.current = recorder
-      mediaChunksRef.current = []
+      audioChunksRef.current = []
       
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
-          mediaChunksRef.current.push(event.data)
+          audioChunksRef.current.push(event.data)
         }
       }
       
       recorder.onstop = () => {
-        const audioBlob = new Blob(mediaChunksRef.current, { type: 'audio/webm' })
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
         const audioUrl = URL.createObjectURL(audioBlob)
         const duration = recordingTime
         
@@ -86,8 +87,7 @@ export default function AudioRecorder() {
         setAudioStream(null)
         
         toast({
-          title: "Recording saved",
-          description: `Recording saved successfully (${formatDuration(duration)})`
+          title: `Recording saved successfully (${formatDuration(duration)})`
         })
       }
       
@@ -103,16 +103,13 @@ export default function AudioRecorder() {
       }, 1000)
       
       toast({
-        title: "Recording started",
-        description: "Click the pause button to pause recording"
-      })
-      
-    } catch (error) {
-      toast({
-        title: "Recording failed",
-        description: "Unable to access microphone. Please check permissions.",
-        variant: "destructive"
-      })
+          title: "Recording started: Click the pause button to pause recording"
+        })
+        
+      } catch (error) {
+        toast({
+          title: "Recording failed: Unable to access microphone. Please check permissions."
+        })
     }
   }
 
@@ -124,9 +121,9 @@ export default function AudioRecorder() {
         clearInterval(timerRef.current)
       }
       toast({
-        title: "Recording paused",
-        description: "Click resume to continue recording"
-      })
+          title: "Recording paused",
+          description: "Click resume to continue recording"
+        })
     }
   }
 
@@ -141,9 +138,9 @@ export default function AudioRecorder() {
       }, 1000)
       
       toast({
-        title: "Recording resumed",
-        description: "Recording continues..."
-      })
+          title: "Recording resumed",
+          description: "Recording continues..."
+        })
     }
   }
 
@@ -176,9 +173,8 @@ export default function AudioRecorder() {
     document.body.removeChild(a)
     
     toast({
-      title: "Download started",
-      description: "Audio file download has started"
-    })
+          title: "Audio file download has started"
+        })
   }
 
   const deleteRecording = (id: string, url: string) => {
@@ -189,9 +185,8 @@ export default function AudioRecorder() {
     }
     
     toast({
-      title: "Recording deleted",
-      description: "Recording has been removed"
-    })
+          title: "Recording has been removed"
+        })
   }
 
   const formatDuration = (seconds: number): string => {
@@ -293,7 +288,7 @@ export default function AudioRecorder() {
                         <Square className="w-4 h-4" />
                       </Button>
                       <Button onClick={stopRecording} variant="outline" size="sm">
-                        <Stop className="w-4 h-4" />
+                        <StopIcon className="w-4 h-4" />
                       </Button>
                     </div>
                   )}
@@ -462,7 +457,6 @@ export default function AudioRecorder() {
                             <audio 
                               src={recording.url} 
                               controls 
-                              className="w-full"
                             />
                           </div>
                         )}

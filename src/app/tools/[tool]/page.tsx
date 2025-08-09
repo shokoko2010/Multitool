@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Share2, Star, Heart, Zap, Shield, Globe, TrendingUp, Brain } from 'lucide-react'
+import { ArrowLeft, Share2, Star, Heart, Zap, Shield, Globe, TrendingUp, Brain, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 
 interface ToolPageProps {
