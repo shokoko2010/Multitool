@@ -1,168 +1,50 @@
-// import { Inter } from 'next/font/google'
-import { ThemeProvider } from 'next-themes'
-import { Toaster } from '@/components/ui/toaster'
-// import Analytics from '@vercel/analytics'
-// import SpeedInsights from '@vercel/speed-insights/next'
-import { LazyNavigation } from '@/components/lazy-navigation'
-import { ErrorBoundary } from '@/components/error-boundary'
-import { AuthProvider } from '@/lib/auth-context'
-import './globals.css'
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
 
-// const inter = Inter({ subsets: ['latin'] })
-const inter = { className: 'font-sans' }
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
 
-export const metadata = {
-  title: {
-    default: 'Free Online Tools - 235+ Multi-Tool Platform',
-    template: '%s | Free Online Tools'
-  },
-  description: 'Discover 235+ free online tools for SEO, development, design, and productivity. Fast, secure, and easy-to-use tools for professionals and beginners.',
-  keywords: [
-    'free online tools',
-    'seo tools',
-    'development tools',
-    'image tools',
-    'text utilities',
-    'network tools',
-    'security tools',
-    'converters',
-    'calculators',
-    'productivity tools',
-    'web tools',
-    'programming tools',
-    'design tools',
-    'optimization tools'
-  ],
-  authors: [{ name: 'Multi-Tool Platform', url: 'https://yourdomain.com' }],
-  creator: 'Multi-Tool Platform',
-  publisher: 'Multi-Tool Platform',
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Z.ai Code Scaffold - AI-Powered Development",
+  description: "Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
+  keywords: ["Z.ai", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "AI development", "React"],
+  authors: [{ name: "Z.ai Team" }],
   openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: 'https://yourdomain.com',
-    title: 'Free Online Tools - 235+ Multi-Tool Platform',
-    description: 'Discover 235+ free online tools for SEO, development, design, and productivity. Fast, secure, and easy-to-use tools for professionals and beginners.',
-    siteName: 'Free Online Tools',
-    images: [
-      {
-        url: '/og-image.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'Free Online Tools Platform',
-      },
-    ],
+    title: "Z.ai Code Scaffold",
+    description: "AI-powered development with modern React stack",
+    url: "https://chat.z.ai",
+    siteName: "Z.ai",
+    type: "website",
   },
   twitter: {
-    card: 'summary_large_image',
-    title: 'Free Online Tools - 235+ Multi-Tool Platform',
-    description: 'Discover 235+ free online tools for SEO, development, design, and productivity.',
-    images: ['/twitter-image.jpg'],
-    creator: '@yourhandle',
+    card: "summary_large_image",
+    title: "Z.ai Code Scaffold",
+    description: "AI-powered development with modern React stack",
   },
-  alternates: {
-    canonical: 'https://yourdomain.com',
-    languages: {
-      'en-US': 'https://yourdomain.com',
-    },
-  },
-  metadataBase: new URL('https://yourdomain.com'),
-  other: {
-    'twitter:image': '/twitter-image.jpg',
-    'twitter:image:alt': 'Free Online Tools Platform',
-  },
-}
+};
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-        <link rel="manifest" href="/site.webmanifest" />
-        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#000000" />
-        <meta name="msapplication-TileColor" content="#000000" />
-        <meta name="theme-color" content="#000000" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="format-detection" content="telephone=no" />
-        
-        {/* Structured Data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebApplication",
-              name: "Free Online Tools",
-              description: "Discover 235+ free online tools for SEO, development, design, and productivity",
-              url: "https://yourdomain.com",
-              applicationCategory: "DeveloperApplication",
-              operatingSystem: "Web Browser",
-              offers: {
-                "@type": "Offer",
-                price: "0",
-                priceCurrency: "USD"
-              },
-              creator: {
-                "@type": "Organization",
-                name: "Multi-Tool Platform",
-                url: "https://yourdomain.com"
-              },
-              featureList: [
-                "SEO Tools",
-                "Development Tools", 
-                "Image Processing",
-                "Text Utilities",
-                "Network Analysis",
-                "Security Tools",
-                "Data Conversion",
-                "Cryptography"
-              ],
-              aggregateRating: {
-                "@type": "AggregateRating",
-                ratingValue: "4.9",
-                reviewCount: "1000"
-              }
-            })
-          }}
-        />
-      </head>
-      <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <ErrorBoundary>
-            <AuthProvider>
-              <LazyNavigation />
-              <main className="pt-16">
-                {children}
-              </main>
-              <Toaster />
-              {/* <Analytics /> */}
-              {/* <SpeedInsights /> */}
-            </AuthProvider>
-          </ErrorBoundary>
-        </ThemeProvider>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+      >
+        {children}
+        <Toaster />
       </body>
     </html>
-  )
+  );
 }
