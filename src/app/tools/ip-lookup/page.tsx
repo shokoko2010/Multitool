@@ -53,30 +53,25 @@ export default function IPLookupTool() {
     setResult(null)
 
     try {
-      // Simulate IP lookup - in a real app, this would call an IP geolocation API
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Mock IP lookup data for demonstration
-      const mockResult: IPLookupResult = {
-        ip: ipAddress,
-        country: 'United States',
-        countryCode: 'US',
-        region: 'California',
-        city: 'San Francisco',
-        zip: '94102',
-        latitude: 37.7749,
-        longitude: -122.4194,
-        isp: 'Cloudflare, Inc.',
-        org: 'Cloudflare, Inc.',
-        asn: 'AS13335',
-        timezone: 'America/Los_Angeles',
-        isProxy: false,
-        isTor: false,
-        threatLevel: 'low'
-      }
+      const response = await fetch('/api/network/ip-lookup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ipAddress: ipAddress.trim()
+        })
+      })
 
-      setResult(mockResult)
+      const data = await response.json()
+
+      if (data.success) {
+        setResult(data.data)
+      } else {
+        setError(data.error || 'Failed to perform IP lookup')
+      }
     } catch (err) {
+      console.error('IP lookup error:', err)
       setError('Failed to perform IP lookup. Please try again.')
     } finally {
       setLoading(false)
@@ -103,12 +98,26 @@ export default function IPLookupTool() {
   const getCurrentIP = async () => {
     try {
       setLoading(true)
-      // In a real app, this would call an API to get the current IP
-      const mockIP = '8.8.8.8'
-      setIpAddress(mockIP)
-      await performIPLookup()
+      
+      // Try to get current IP from a free service
+      const response = await fetch('https://api.ipify.org?format=json')
+      const data = await response.json()
+      
+      if (data.ip) {
+        setIpAddress(data.ip)
+        // Automatically perform lookup after getting IP
+        setTimeout(() => {
+          performIPLookup()
+        }, 100)
+      } else {
+        throw new Error('Could not get current IP')
+      }
     } catch (err) {
-      setError('Failed to get current IP address')
+      console.error('Get current IP error:', err)
+      // Fallback to a common IP for demonstration
+      const fallbackIP = '8.8.8.8'
+      setIpAddress(fallbackIP)
+      setError('Could not detect your IP. Using example IP instead.')
     } finally {
       setLoading(false)
     }
