@@ -1,423 +1,351 @@
-"use client"
+'use client'
 
+import { useState, useEffect } from 'react'
+import { Tool } from '@/data/tools'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { 
-  Grid3X3, 
-  TrendingUp, 
-  Brain, 
-  Code, 
-  Image, 
-  Calculator, 
-  Hash, 
-  Shield, 
-  Globe,
-  Settings,
-  ArrowRight,
-  Zap,
-  Users,
-  Star,
-  BarChart3
-} from 'lucide-react'
-import { motion } from 'framer-motion'
-import Link from 'next/link'
+import { Input } from '@/components/ui/input'
+import { Search, Grid, List, ArrowRight, Tool as ToolIcon, Star, TrendingUp } from 'lucide-react'
+import { Header } from '@/components/header'
+import { Footer } from '@/components/footer'
+
+interface CategoryStats {
+  name: string
+  count: number
+  description: string
+  icon: string
+  popularTools: Tool[]
+  color: string
+}
+
+const categoryDescriptions: Record<string, string> = {
+  'development': 'Essential tools for software developers including code formatters, validators, and testing utilities.',
+  'text': 'Text processing and manipulation tools for content creators and writers.',
+  'conversion': 'Convert between different formats, encodings, and measurement units.',
+  'validation': 'Validate and verify data formats, emails, URLs, and other inputs.',
+  'generator': 'Generate various types of content, data, and test samples.',
+  'math': 'Mathematical calculations, statistics, and number theory tools.',
+  'time': 'Time zone converters, date calculators, and scheduling utilities.',
+  'network': 'Network tools including IP lookup, port scanners, and DNS utilities.',
+  'security': 'Security tools for encryption, hashing, and cybersecurity analysis.',
+  'design': 'Design tools for colors, fonts, images, and visual assets.',
+  'content': 'Content creation and optimization tools for writers and marketers.',
+  'seo': 'Search engine optimization tools for website analysis and improvement.',
+  'data': 'Data processing, analysis, and visualization tools.',
+  'file': 'File manipulation, compression, and format conversion tools.',
+  'system': 'System administration and monitoring utilities.',
+  'communication': 'Communication and collaboration tools for teams.',
+  'productivity': 'Productivity enhancement tools for workflow optimization.',
+  'measurement': 'Unit converters and measurement calculation tools.',
+  'finance': 'Financial calculators, currency converters, and investment tools.'
+}
+
+const categoryIcons: Record<string, string> = {
+  'development': 'Code',
+  'text': 'Type',
+  'conversion': 'RefreshCw',
+  'validation': 'CheckCircle',
+  'generator': 'Zap',
+  'math': 'Calculator',
+  'time': 'Clock',
+  'network': 'Globe',
+  'security': 'Lock',
+  'design': 'Palette',
+  'content': 'FileText',
+  'seo': 'TrendingUp',
+  'data': 'Database',
+  'file': 'File',
+  'system': 'Settings',
+  'communication': 'MessageSquare',
+  'productivity': 'Target',
+  'measurement': 'Ruler',
+  'finance': 'DollarSign'
+}
+
+const categoryColors: Record<string, string> = {
+  'development': 'bg-blue-100 text-blue-800',
+  'text': 'bg-green-100 text-green-800',
+  'conversion': 'bg-purple-100 text-purple-800',
+  'validation': 'bg-red-100 text-red-800',
+  'generator': 'bg-yellow-100 text-yellow-800',
+  'math': 'bg-indigo-100 text-indigo-800',
+  'time': 'bg-cyan-100 text-cyan-800',
+  'network': 'bg-orange-100 text-orange-800',
+  'security': 'bg-pink-100 text-pink-800',
+  'design': 'bg-emerald-100 text-emerald-800',
+  'content': 'bg-teal-100 text-teal-800',
+  'seo': 'bg-amber-100 text-amber-800',
+  'data': 'bg-violet-100 text-violet-800',
+  'file': 'bg-slate-100 text-slate-800',
+  'system': 'bg-zinc-100 text-zinc-800',
+  'communication': 'bg-rose-100 text-rose-800',
+  'productivity': 'bg-lime-100 text-lime-800',
+  'measurement': 'bg-fuchsia-100 text-fuchsia-800',
+  'finance': 'bg-rose-100 text-rose-800'
+}
 
 export default function CategoriesPage() {
-  const categories = [
-    {
-      id: 'all',
-      name: 'All Tools',
-      description: 'Browse all 235+ tools available on our platform',
-      icon: Grid3X3,
-      count: 235,
-      color: 'bg-blue-100 text-blue-800',
-      featured: true,
-      popular: true,
-      tools: [
-        'SEO Analyzer', 'Meta Tag Generator', 'Image Optimizer', 'Password Generator',
-        'JSON Formatter', 'Base64 Encoder', 'QR Code Generator', 'Text to Speech'
-      ]
-    },
-    {
-      id: 'seo',
-      name: 'SEO Tools',
-      description: 'Search engine optimization tools to improve your website rankings',
-      icon: TrendingUp,
-      count: 13,
-      color: 'bg-green-100 text-green-800',
-      featured: true,
-      popular: true,
-      tools: [
-        'SEO Analyzer', 'Keyword Density', 'Meta Tag Generator', 'SERP Checker',
-        'Backlink Checker', 'Plagiarism Checker', 'Readability Score', 'Robots.txt Generator'
-      ]
-    },
-    {
-      id: 'ai',
-      name: 'AI Tools',
-      description: 'Artificial intelligence powered tools for content creation and analysis',
-      icon: Brain,
-      count: 8,
-      color: 'bg-purple-100 text-purple-800',
-      featured: true,
-      popular: true,
-      tools: [
-        'AI Content Generator', 'AI SEO Title', 'AI SEO Description', 'AI Keyword Cluster',
-        'Text Summarizer', 'Sentiment Analyzer', 'Paraphraser'
-      ]
-    },
-    {
-      id: 'development',
-      name: 'Development Tools',
-      description: 'Coding and development utilities for programmers',
-      icon: Code,
-      count: 15,
-      color: 'bg-orange-100 text-orange-800',
-      featured: true,
-      tools: [
-        'JSON Formatter', 'XML Formatter', 'HTML Formatter', 'SQL Formatter',
-        'Regex Tester', 'JavaScript Formatter', 'CSS Formatter'
-      ]
-    },
-    {
-      id: 'image',
-      name: 'Image Tools',
-      description: 'Image processing, conversion, and optimization utilities',
-      icon: Image,
-      count: 10,
-      color: 'bg-pink-100 text-pink-800',
-      popular: true,
-      tools: [
-        'Image Converter', 'Image Resizer', 'Image Compressor', 'EXIF Reader',
-        'QR Code Generator', 'Color Picker'
-      ]
-    },
-    {
-      id: 'converters',
-      name: 'Converters',
-      description: 'Unit, data, and format conversion tools',
-      icon: Calculator,
-      count: 8,
-      color: 'bg-yellow-100 text-yellow-800',
-      tools: [
-        'Temperature Converter', 'Distance Converter', 'Weight Converter',
-        'Timestamp Converter', 'Data Size Converter'
-      ]
-    },
-    {
-      id: 'cryptography',
-      name: 'Cryptography',
-      description: 'Encryption, hashing, and security tools',
-      icon: Hash,
-      count: 12,
-      color: 'bg-red-100 text-red-800',
-      popular: true,
-      tools: [
-        'MD5 Generator', 'SHA-256 Generator', 'BCrypt Generator', 'UUID Generator',
-        'Hash Checker', 'Token Generator'
-      ]
-    },
-    {
-      id: 'security',
-      name: 'Security Tools',
-      description: 'Security analysis and vulnerability checking tools',
-      icon: Shield,
-      count: 9,
-      color: 'bg-gray-100 text-gray-800',
-      tools: [
-        'Safe URL Checker', 'Password Strength', 'SSL Checker', 'Meta Tags Checker',
-        'Whois Lookup', 'Port Scanner'
-      ]
-    },
-    {
-      id: 'network',
-      name: 'Network Tools',
-      description: 'Networking utilities and diagnostics',
-      icon: Globe,
-      count: 11,
-      color: 'bg-cyan-100 text-cyan-800',
-      tools: [
-        'DNS Lookup', 'IP Lookup', 'Ping Tool', 'HTTP Headers',
-        'HTTP Request', 'Reverse IP'
-      ]
-    },
-    {
-      id: 'text',
-      name: 'Text Utilities',
-      description: 'Text processing and manipulation tools',
-      icon: Settings,
-      count: 18,
-      color: 'bg-indigo-100 text-indigo-800',
-      popular: true,
-      tools: [
-        'Text to Speech', 'Case Converter', 'Character Counter', 'Email Extractor',
-        'Reverse Text', 'URL Encoder', 'Word Counter'
-      ]
-    },
-    {
-      id: 'data',
-      name: 'Data Analysis',
-      description: 'Data processing, analysis, and visualization tools',
-      icon: BarChart3,
-      count: 1,
-      color: 'bg-purple-100 text-purple-800',
-      featured: true,
-      tools: [
-        'Data Visualization Tool'
-      ]
-    }
-  ]
+  const [tools, setTools] = useState<Tool[]>([])
+  const [categories, setCategories] = useState<CategoryStats[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [loading, setLoading] = useState(true)
 
-  const featuredCategories = categories.filter(cat => cat.featured)
-  const popularCategories = categories.filter(cat => cat.popular)
+  useEffect(() => {
+    fetchTools()
+  }, [])
+
+  const fetchTools = async () => {
+    try {
+      const response = await fetch('/api/tools')
+      const data = await response.json()
+      if (data.success) {
+        setTools(data.data)
+        
+        // Group tools by category and calculate stats
+        const categoryMap = new Map<string, Tool[]>()
+        data.data.forEach((tool: Tool) => {
+          if (!categoryMap.has(tool.category)) {
+            categoryMap.set(tool.category, [])
+          }
+          categoryMap.get(tool.category)?.push(tool)
+        })
+
+        // Create category stats
+        const categoryStats = Array.from(categoryMap.entries()).map(([name, toolsInCategory]) => ({
+          name,
+          count: toolsInCategory.length,
+          description: categoryDescriptions[name] || `Tools and utilities for ${name.toLowerCase()}.`,
+          icon: categoryIcons[name] || 'Tool',
+          popularTools: toolsInCategory.slice(0, 3), // Top 3 tools per category
+          color: categoryColors[name] || 'bg-gray-100 text-gray-800'
+        }))
+
+        setCategories(categoryStats.sort((a, b) => b.count - a.count))
+      }
+    } catch (error) {
+      console.error('Error fetching tools:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filteredCategories = categories.filter(category =>
+    category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    category.description.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const getIconComponent = (iconName: string) => {
+    // This would normally import the actual icon component
+    // For now, we'll use a placeholder
+    return <ToolIcon className="w-6 h-6" />
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <main className="flex-1">
+          <div className="container mx-auto px-4 py-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">Loading categories...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-br from-primary/5 via-background to-primary/5">
-        <div className="container mx-auto px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="space-y-6"
-          >
-            <Badge variant="secondary" className="text-sm px-4 py-2">
-              <Grid3X3 className="w-4 h-4 mr-2" />
-              Browse by Category
-            </Badge>
-            <h1 className="text-4xl md:text-5xl font-bold">
-              Organized Tools for Every Need
-            </h1>
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header />
+      
+      <main className="flex-1">
+        <div className="container mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold mb-4">Tool Categories</h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Find exactly what you're looking for with our well-organized tool categories. 
-              Each category contains specialized tools to help you complete tasks efficiently.
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Featured Categories */}
-      <section className="py-16">
-        <div className="container mx-auto px-6">
-          <div className="text-center space-y-4 mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold">Featured Categories</h2>
-            <p className="text-muted-foreground text-lg">
-              Handpicked categories that our users love most
+              Explore our comprehensive collection of 299+ tools organized into 19 specialized categories
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredCategories.map((category, index) => (
-              <motion.div
-                key={category.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="group cursor-pointer"
-                onClick={() => window.location.href = `/categories/${category.id}`}
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-primary/10 rounded-full">
+                    <ToolIcon className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{tools.length}</p>
+                    <p className="text-sm text-muted-foreground">Total Tools</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-primary/10 rounded-full">
+                    <Grid className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{categories.length}</p>
+                    <p className="text-sm text-muted-foreground">Categories</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-primary/10 rounded-full">
+                    <TrendingUp className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {Math.round(tools.length / categories.length)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Avg Tools per Category</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Search and View Controls */}
+          <div className="flex flex-col md:flex-row gap-4 mb-8">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Search categories..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="icon"
+                onClick={() => setViewMode('grid')}
               >
-                <Card className="h-full hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20">
+                <Grid className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="icon"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Categories Grid/List */}
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredCategories.map((category) => (
+                <Card key={category.name} className="hover:shadow-lg transition-shadow cursor-pointer">
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className={`p-3 rounded-lg ${category.color}`}>
-                        <category.icon className="h-6 w-6" />
-                      </div>
-                      <div className="flex gap-1">
-                        {category.featured && (
-                          <Badge variant="secondary" className="text-xs">
-                            <Star className="w-3 h-3 mr-1" />
-                            Featured
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          {getIconComponent(category.icon)}
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">{category.name}</CardTitle>
+                          <Badge className={`mt-1 ${category.color}`}>
+                            {category.count} tools
                           </Badge>
-                        )}
-                        {category.popular && (
-                          <Badge variant="default" className="text-xs">
-                            Popular
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <CardTitle className="text-xl">{category.name}</CardTitle>
-                    <CardDescription>{category.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Badge variant="outline">{category.count} Tools</Badge>
-                        <Button variant="ghost" size="sm">
-                          View All
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </Button>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-muted-foreground">Popular Tools:</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {category.tools.slice(0, 4).map((tool, toolIndex) => (
-                            <Badge key={toolIndex} variant="secondary" className="text-xs">
-                              {tool}
-                            </Badge>
-                          ))}
-                          {category.tools.length > 4 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{category.tools.length - 4} more
-                            </Badge>
-                          )}
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* All Categories Grid */}
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-6">
-          <div className="text-center space-y-4 mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold">All Categories</h2>
-            <p className="text-muted-foreground text-lg">
-              Browse all available tool categories
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {categories.map((category, index) => (
-              <motion.div
-                key={category.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="group cursor-pointer"
-                onClick={() => window.location.href = `/categories/${category.id}`}
-              >
-                <Card className="h-full hover:shadow-lg transition-all duration-300 hover:border-primary/20">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center justify-between">
-                      <div className={`p-2 rounded-lg ${category.color}`}>
-                        <category.icon className="h-5 w-5" />
-                      </div>
-                      <Badge variant="outline">{category.count}</Badge>
-                    </div>
-                    <CardTitle className="text-base leading-tight">{category.name}</CardTitle>
-                    <CardDescription className="text-xs line-clamp-2">
+                    <CardDescription className="text-sm">
                       {category.description}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex gap-1">
-                        {category.featured && (
-                          <Badge variant="secondary" className="text-xs">Featured</Badge>
-                        )}
-                        {category.popular && (
-                          <Badge variant="default" className="text-xs">Popular</Badge>
-                        )}
+                  <CardContent>
+                    {category.popularTools.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground">Popular Tools:</p>
+                        <div className="space-y-1">
+                          {category.popularTools.map((tool) => (
+                            <div key={tool.id} className="flex items-center justify-between text-sm">
+                              <span className="truncate">{tool.name}</span>
+                              <Star className="w-3 h-3 text-yellow-500" />
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <ArrowRight className="h-4 w-4" />
+                    )}
+                    
+                    <Button className="w-full mt-4" variant="outline">
+                      Explore {category.name} Tools
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredCategories.map((category) => (
+                <Card key={category.name}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-primary/10 rounded-lg">
+                          {getIconComponent(category.icon)}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-lg font-semibold">{category.name}</h3>
+                            <Badge className={category.color}>
+                              {category.count} tools
+                            </Badge>
+                          </div>
+                          <p className="text-muted-foreground mb-3">
+                            {category.description}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {category.popularTools.slice(0, 5).map((tool) => (
+                              <Badge key={tool.id} variant="outline" className="text-xs">
+                                {tool.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <Button variant="outline">
+                        View Tools
+                        <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Statistics */}
-      <section className="py-16">
-        <div className="container mx-auto px-6">
-          <div className="text-center space-y-4 mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold">Platform Statistics</h2>
-            <p className="text-muted-foreground text-lg">
-              See the scale and variety of our tool collection
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-center space-y-2"
-            >
-              <div className="text-4xl font-bold text-primary bg-primary/10 rounded-lg p-4">
-                235+
-              </div>
-              <div className="text-muted-foreground">Total Tools</div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-center space-y-2"
-            >
-              <div className="text-4xl font-bold text-primary bg-primary/10 rounded-lg p-4">
-                11
-              </div>
-              <div className="text-muted-foreground">Categories</div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="text-center space-y-2"
-            >
-              <div className="text-4xl font-bold text-primary bg-primary/10 rounded-lg p-4">
-                50K+
-              </div>
-              <div className="text-muted-foreground">Daily Users</div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="text-center space-y-2"
-            >
-              <div className="text-4xl font-bold text-primary bg-primary/10 rounded-lg p-4">
-                4.9/5
-              </div>
-              <div className="text-muted-foreground">Average Rating</div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-primary/10 to-primary/5">
-        <div className="container mx-auto px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-2xl mx-auto space-y-6"
-          >
-            <h2 className="text-3-4xl md:text-4xl font-bold">
-              Can't Find What You're Looking For?
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              We're constantly adding new tools to our platform. Let us know what tools you'd like to see next!
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="px-8 py-3 text-base">
-                Request a Tool
-              </Button>
-              <Button variant="outline" size="lg" className="px-8 py-3 text-base">
-                Contact Us
-              </Button>
+              ))}
             </div>
-          </motion.div>
+          )}
+
+          {filteredCategories.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No categories found matching your search.</p>
+            </div>
+          )}
         </div>
-      </section>
+      </main>
+      
+      <Footer />
     </div>
   )
 }
