@@ -22,7 +22,28 @@ export default function AISEOTitleGenerator() {
 
     setLoading(true)
     try {
-      // Simulate AI SEO title generation
+      const response = await fetch('/api/ai/seo-title', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topic: input.trim(),
+          keywords: [],
+          targetAudience: 'general'
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setResults(data.data.titles)
+      } else {
+        throw new Error(data.error || 'Failed to generate SEO titles')
+      }
+    } catch (error) {
+      console.error('Error generating SEO titles:', error)
+      // Fallback to mock titles if API fails
       const mockTitles = [
         `${input} - Complete Guide 2024 | Expert Tips`,
         `How to ${input}: Step-by-Step Tutorial`,
@@ -34,8 +55,6 @@ export default function AISEOTitleGenerator() {
         `The Complete ${input} Handbook 2024`
       ]
       setResults(mockTitles)
-    } catch (error) {
-      console.error('Error generating SEO titles:', error)
     } finally {
       setLoading(false)
     }

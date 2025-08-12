@@ -41,6 +41,26 @@ export const tools: Tool[] = [
     featured: true,
     tags: ['ai', 'seo', 'description']
   },
+  {
+    id: 'ai-code-reviewer',
+    name: 'AI Code Reviewer',
+    description: 'Analyze code quality, detect bugs, and get optimization suggestions',
+    category: 'AI Tools',
+    icon: 'Code',
+    path: '/tools/ai-code-reviewer',
+    featured: true,
+    tags: ['ai', 'code', 'review', 'analysis']
+  },
+  {
+    id: 'ai-keyword-cluster',
+    name: 'AI Keyword Cluster Generator',
+    description: 'Generate comprehensive keyword clusters based on search intent',
+    category: 'AI Tools',
+    icon: 'Search',
+    path: '/tools/ai-keyword-cluster',
+    featured: true,
+    tags: ['ai', 'keyword', 'seo', 'clustering']
+  },
   
   // Validators
   {
@@ -2739,6 +2759,998 @@ export const tools: Tool[] = [
     icon: 'FileText',
     path: '/tools/duplicate-content-checker',
     tags: ['duplicate', 'content', 'checker', 'seo', 'plagiarism']
+  },
+  
+  // Additional Implemented Tools
+  {
+    id: 'api-tester',
+    name: 'API Tester',
+    description: 'Test REST APIs with custom requests',
+    category: 'Developer Tools',
+    icon: 'Server',
+    path: '/tools/api-tester',
+    tags: ['api', 'test', 'rest', 'http']
+  },
+  {
+    id: 'article-rewriter',
+    name: 'Article Rewriter',
+    description: 'Rewrite articles with AI assistance',
+    category: 'AI Tools',
+    icon: 'FileText',
+    path: '/tools/article-rewriter',
+    tags: ['article', 'rewrite', 'ai', 'content']
+  },
+  {
+    id: 'audio-converter',
+    name: 'Audio Converter',
+    description: 'Convert audio files between formats',
+    category: 'Media Tools',
+    icon: 'File',
+    path: '/tools/audio-converter',
+    tags: ['audio', 'converter', 'format', 'media']
+  },
+  {
+    id: 'audio-recorder',
+    name: 'Audio Recorder',
+    description: 'Record audio from microphone',
+    category: 'Media Tools',
+    icon: 'File',
+    path: '/tools/audio-recorder',
+    tags: ['audio', 'record', 'microphone', 'media']
+  },
+  {
+    id: 'backlink-maker',
+    name: 'Backlink Maker',
+    description: 'Generate backlinks for SEO',
+    category: 'SEO Tools',
+    icon: 'Link',
+    path: '/tools/backlink-maker',
+    tags: ['backlink', 'seo', 'link', 'generator']
+  },
+  {
+    id: 'bcrypt-generator',
+    name: 'BCrypt Generator',
+    description: 'Generate BCrypt hashes for passwords',
+    category: 'Security Tools',
+    icon: 'Lock',
+    path: '/tools/bcrypt-generator',
+    tags: ['bcrypt', 'hash', 'password', 'security']
+  },
+  {
+    id: 'blacklist',
+    name: 'Blacklist Checker',
+    description: 'Check if domain or IP is blacklisted',
+    category: 'Security Tools',
+    icon: 'Shield',
+    path: '/tools/blacklist',
+    tags: ['blacklist', 'security', 'domain', 'ip']
+  },
+  {
+    id: 'bulk-geo',
+    name: 'Bulk Geolocation',
+    description: 'Get geolocation data for multiple IPs',
+    category: 'Network Tools',
+    icon: 'Globe',
+    path: '/tools/bulk-geo',
+    tags: ['geolocation', 'ip', 'bulk', 'network']
+  },
+  {
+    id: 'case-converter',
+    name: 'Case Converter',
+    description: 'Convert text between different cases',
+    category: 'Text Tools',
+    icon: 'Type',
+    path: '/tools/case-converter',
+    tags: ['text', 'case', 'converter', 'format']
+  },
+  {
+    id: 'chart-generator',
+    name: 'Chart Generator',
+    description: 'Generate charts from data',
+    category: 'Data Tools',
+    icon: 'BarChart',
+    path: '/tools/chart-generator',
+    tags: ['chart', 'graph', 'data', 'visualization']
+  },
+  {
+    id: 'citation-generator',
+    name: 'Citation Generator',
+    description: 'Generate citations in various formats',
+    category: 'Text Tools',
+    icon: 'FileText',
+    path: '/tools/citation-generator',
+    tags: ['citation', 'reference', 'academic', 'format']
+  },
+  {
+    id: 'code-formatter',
+    name: 'Code Formatter',
+    description: 'Format code in various programming languages',
+    category: 'Developer Tools',
+    icon: 'Code',
+    path: '/tools/code-formatter',
+    tags: ['code', 'format', 'beautify', 'programming']
+  },
+  {
+    id: 'css-formatter',
+    name: 'CSS Formatter',
+    description: 'Format and beautify CSS code',
+    category: 'Web Tools',
+    icon: 'FileCode',
+    path: '/tools/css-formatter',
+    tags: ['css', 'format', 'beautify', 'style']
+  },
+  {
+    id: 'csv-converter',
+    name: 'CSV Converter',
+    description: 'Convert CSV files to other formats',
+    category: 'Data Tools',
+    icon: 'FileSpreadsheet',
+    path: '/tools/csv-converter',
+    tags: ['csv', 'converter', 'data', 'format']
+  },
+  {
+    id: 'data-extractor',
+    name: 'Data Extractor',
+    description: 'Extract data from websites and documents',
+    category: 'Data Tools',
+    icon: 'FileText',
+    path: '/tools/data-extractor',
+    tags: ['data', 'extract', 'scrape', 'parse']
+  },
+  {
+    id: 'data-size-converter',
+    name: 'Data Size Converter',
+    description: 'Convert between different data size units',
+    category: 'Unit Converters',
+    icon: 'Database',
+    path: '/tools/data-size-converter',
+    tags: ['data', 'size', 'converter', 'units']
+  },
+  {
+    id: 'data-visualization',
+    name: 'Data Visualization',
+    description: 'Create visualizations from data',
+    category: 'Data Tools',
+    icon: 'BarChart',
+    path: '/tools/data-visualization',
+    tags: ['data', 'visualization', 'chart', 'graph']
+  },
+  {
+    id: 'distance-converter',
+    name: 'Distance Converter',
+    description: 'Convert between different distance units',
+    category: 'Unit Converters',
+    icon: 'Ruler',
+    path: '/tools/distance-converter',
+    tags: ['distance', 'converter', 'units', 'length']
+  },
+  {
+    id: 'domain-age',
+    name: 'Domain Age Checker',
+    description: 'Check the age of domains',
+    category: 'SEO Tools',
+    icon: 'Globe',
+    path: '/tools/domain-age',
+    tags: ['domain', 'age', 'seo', 'checker']
+  },
+  {
+    id: 'domain-hosting',
+    name: 'Domain Hosting Checker',
+    description: 'Check domain hosting information',
+    category: 'SEO Tools',
+    icon: 'Server',
+    path: '/tools/domain-hosting',
+    tags: ['domain', 'hosting', 'checker', 'seo']
+  },
+  {
+    id: 'domain-to-ip',
+    name: 'Domain to IP Converter',
+    description: 'Convert domain names to IP addresses',
+    category: 'Network Tools',
+    icon: 'Globe',
+    path: '/tools/domain-to-ip',
+    tags: ['domain', 'ip', 'converter', 'network']
+  },
+  {
+    id: 'email-extractor',
+    name: 'Email Extractor',
+    description: 'Extract email addresses from text',
+    category: 'Text Tools',
+    icon: 'Mail',
+    path: '/tools/email-extractor',
+    tags: ['email', 'extract', 'text', 'parser']
+  },
+  {
+    id: 'equation-solver',
+    name: 'Equation Solver',
+    description: 'Solve mathematical equations',
+    category: 'Math Tools',
+    icon: 'Calculator',
+    path: '/tools/equation-solver',
+    tags: ['equation', 'solve', 'math', 'calculator']
+  },
+  {
+    id: 'exif-reader',
+    name: 'EXIF Reader',
+    description: 'Read EXIF data from images',
+    category: 'Image Tools',
+    icon: 'Image',
+    path: '/tools/exif-reader',
+    tags: ['exif', 'image', 'metadata', 'reader']
+  },
+  {
+    id: 'exif-remover',
+    name: 'EXIF Remover',
+    description: 'Remove EXIF data from images',
+    category: 'Image Tools',
+    icon: 'Image',
+    path: '/tools/exif-remover',
+    tags: ['exif', 'image', 'metadata', 'privacy']
+  },
+  {
+    id: 'file-joiner',
+    name: 'File Joiner',
+    description: 'Join multiple files into one',
+    category: 'File Tools',
+    icon: 'File',
+    path: '/tools/file-joiner',
+    tags: ['file', 'join', 'merge', 'combine']
+  },
+  {
+    id: 'file-splitter',
+    name: 'File Splitter',
+    description: 'Split files into smaller parts',
+    category: 'File Tools',
+    icon: 'File',
+    path: '/tools/file-splitter',
+    tags: ['file', 'split', 'divide', 'parts']
+  },
+  {
+    id: 'git-helper',
+    name: 'Git Helper',
+    description: 'Git command helper and generator',
+    category: 'Developer Tools',
+    icon: 'GitBranch',
+    path: '/tools/git-helper',
+    tags: ['git', 'version', 'control', 'helper']
+  },
+  {
+    id: 'google-index',
+    name: 'Google Index Checker',
+    description: 'Check if pages are indexed by Google',
+    category: 'SEO Tools',
+    icon: 'Search',
+    path: '/tools/google-index',
+    tags: ['google', 'index', 'seo', 'checker']
+  },
+  {
+    id: 'grammar-checker',
+    name: 'Grammar Checker',
+    description: 'Check grammar and spelling',
+    category: 'Text Tools',
+    icon: 'FileText',
+    path: '/tools/grammar-checker',
+    tags: ['grammar', 'spelling', 'check', 'text']
+  },
+  {
+    id: 'hash-checker',
+    name: 'Hash Checker',
+    description: 'Verify file hashes',
+    category: 'Security Tools',
+    icon: 'Fingerprint',
+    path: '/tools/hash-checker',
+    tags: ['hash', 'check', 'verify', 'security']
+  },
+  {
+    id: 'hex-to-rgb',
+    name: 'Hex to RGB Converter',
+    description: 'Convert hex colors to RGB format',
+    category: 'Color Tools',
+    icon: 'Palette',
+    path: '/tools/hex-to-rgb',
+    tags: ['hex', 'rgb', 'color', 'converter']
+  },
+  {
+    id: 'hreflang-generator',
+    name: 'Hreflang Generator',
+    description: 'Generate hreflang tags for SEO',
+    category: 'SEO Tools',
+    icon: 'Globe',
+    path: '/tools/hreflang-generator',
+    tags: ['hreflang', 'seo', 'tags', 'generator']
+  },
+  {
+    id: 'html-formatter',
+    name: 'HTML Formatter',
+    description: 'Format and beautify HTML code',
+    category: 'Web Tools',
+    icon: 'Code',
+    path: '/tools/html-formatter',
+    tags: ['html', 'format', 'beautify', 'code']
+  },
+  {
+    id: 'html-scraper',
+    name: 'HTML Scraper',
+    description: 'Scrape data from HTML pages',
+    category: 'Web Tools',
+    icon: 'Code',
+    path: '/tools/html-scraper',
+    tags: ['html', 'scrape', 'data', 'extract']
+  },
+  {
+    id: 'http-headers',
+    name: 'HTTP Headers Viewer',
+    description: 'View HTTP headers of websites',
+    category: 'Network Tools',
+    icon: 'Server',
+    path: '/tools/http-headers',
+    tags: ['http', 'headers', 'network', 'web']
+  },
+  {
+    id: 'http-request',
+    name: 'HTTP Request Tester',
+    description: 'Test HTTP requests and responses',
+    category: 'Network Tools',
+    icon: 'Server',
+    path: '/tools/http-request',
+    tags: ['http', 'request', 'test', 'network']
+  },
+  {
+    id: 'image-compressor',
+    name: 'Image Compressor',
+    description: 'Compress images to reduce file size',
+    category: 'Image Tools',
+    icon: 'Image',
+    path: '/tools/image-compressor',
+    tags: ['image', 'compress', 'optimize', 'size']
+  },
+  {
+    id: 'image-placeholder',
+    name: 'Image Placeholder Generator',
+    description: 'Generate placeholder images',
+    category: 'Image Tools',
+    icon: 'Image',
+    path: '/tools/image-placeholder',
+    tags: ['image', 'placeholder', 'generator', 'dummy']
+  },
+  {
+    id: 'image-to-text',
+    name: 'Image to Text Converter',
+    description: 'Extract text from images using OCR',
+    category: 'Image Tools',
+    icon: 'Image',
+    path: '/tools/image-to-text',
+    tags: ['image', 'text', 'ocr', 'extract']
+  },
+  {
+    id: 'ip-geolocation',
+    name: 'IP Geolocation',
+    description: 'Get geolocation data for IP addresses',
+    category: 'Network Tools',
+    icon: 'Globe',
+    path: '/tools/ip-geolocation',
+    tags: ['ip', 'geolocation', 'location', 'network']
+  },
+  {
+    id: 'javascript-formatter',
+    name: 'JavaScript Formatter',
+    description: 'Format and beautify JavaScript code',
+    category: 'Web Tools',
+    icon: 'FileJson',
+    path: '/tools/javascript-formatter',
+    tags: ['javascript', 'format', 'beautify', 'code']
+  },
+  {
+    id: 'json-schema-validator',
+    name: 'JSON Schema Validator',
+    description: 'Validate JSON against schemas',
+    category: 'Developer Tools',
+    icon: 'FileJson',
+    path: '/tools/json-schema-validator',
+    tags: ['json', 'schema', 'validate', 'developer']
+  },
+  {
+    id: 'jwt-tool',
+    name: 'JWT Tool',
+    description: 'Encode and decode JWT tokens',
+    category: 'Security Tools',
+    icon: 'Key',
+    path: '/tools/jwt-tool',
+    tags: ['jwt', 'token', 'encode', 'decode']
+  },
+  {
+    id: 'keyword-cpc-calculator',
+    name: 'Keyword CPC Calculator',
+    description: 'Calculate keyword cost per click',
+    category: 'SEO Tools',
+    icon: 'DollarSign',
+    path: '/tools/keyword-cpc-calculator',
+    tags: ['keyword', 'cpc', 'calculator', 'seo']
+  },
+  {
+    id: 'keyword-density',
+    name: 'Keyword Density Analyzer',
+    description: 'Analyze keyword density in text',
+    category: 'SEO Tools',
+    icon: 'Search',
+    path: '/tools/keyword-density',
+    tags: ['keyword', 'density', 'analyzer', 'seo']
+  },
+  {
+    id: 'keyword-position-checker',
+    name: 'Keyword Position Checker',
+    description: 'Check keyword position in search results',
+    category: 'SEO Tools',
+    icon: 'Search',
+    path: '/tools/keyword-position-checker',
+    tags: ['keyword', 'position', 'checker', 'seo']
+  },
+  {
+    id: 'link-analyzer',
+    name: 'Link Analyzer',
+    description: 'Analyze links on web pages',
+    category: 'SEO Tools',
+    icon: 'Link',
+    path: '/tools/link-analyzer',
+    tags: ['link', 'analyzer', 'seo', 'web']
+  },
+  {
+    id: 'link-price',
+    name: 'Link Price Calculator',
+    description: 'Calculate link prices for SEO',
+    category: 'SEO Tools',
+    icon: 'DollarSign',
+    path: '/tools/link-price',
+    tags: ['link', 'price', 'calculator', 'seo']
+  },
+  {
+    id: 'malware-checker',
+    name: 'Malware Checker',
+    description: 'Check websites for malware',
+    category: 'Security Tools',
+    icon: 'Shield',
+    path: '/tools/malware-checker',
+    tags: ['malware', 'security', 'checker', 'scan']
+  },
+  {
+    id: 'md5-generator',
+    name: 'MD5 Generator',
+    description: 'Generate MD5 hashes',
+    category: 'Security Tools',
+    icon: 'Fingerprint',
+    path: '/tools/md5-generator',
+    tags: ['md5', 'hash', 'generator', 'security']
+  },
+  {
+    id: 'meta-tags',
+    name: 'Meta Tags Generator',
+    description: 'Generate meta tags for web pages',
+    category: 'SEO Tools',
+    icon: 'Tag',
+    path: '/tools/meta-tags',
+    tags: ['meta', 'tags', 'seo', 'generator']
+  },
+  {
+    id: 'meta-tags-analyzer',
+    name: 'Meta Tags Analyzer',
+    description: 'Analyze meta tags of web pages',
+    category: 'SEO Tools',
+    icon: 'Tag',
+    path: '/tools/meta-tags-analyzer',
+    tags: ['meta', 'tags', 'analyzer', 'seo']
+  },
+  {
+    id: 'mozrank',
+    name: 'MozRank Checker',
+    description: 'Check MozRank for domains',
+    category: 'SEO Tools',
+    icon: 'Search',
+    path: '/tools/mozrank',
+    tags: ['mozrank', 'seo', 'checker', 'domain']
+  },
+  {
+    id: 'my-ip',
+    name: 'My IP Address',
+    description: 'Show your current IP address',
+    category: 'Network Tools',
+    icon: 'Globe',
+    path: '/tools/my-ip',
+    tags: ['ip', 'address', 'network', 'my']
+  },
+  {
+    id: 'network-diagnostic',
+    name: 'Network Diagnostic',
+    description: 'Diagnose network issues',
+    category: 'Network Tools',
+    icon: 'Wifi',
+    path: '/tools/network-diagnostic',
+    tags: ['network', 'diagnostic', 'troubleshoot', 'tools']
+  },
+  {
+    id: 'online-ping-website-tool',
+    name: 'Online Ping Website Tool',
+    description: 'Ping websites to check availability',
+    category: 'Network Tools',
+    icon: 'Wifi',
+    path: '/tools/online-ping-website-tool',
+    tags: ['ping', 'website', 'online', 'network']
+  },
+  {
+    id: 'pagespeed-insights',
+    name: 'PageSpeed Insights',
+    description: 'Check page speed and performance',
+    category: 'SEO Tools',
+    icon: 'Gauge',
+    path: '/tools/pagespeed-insights',
+    tags: ['pagespeed', 'insights', 'performance', 'seo']
+  },
+  {
+    id: 'paragraph-counter',
+    name: 'Paragraph Counter',
+    description: 'Count paragraphs in text',
+    category: 'Text Tools',
+    icon: 'FileText',
+    path: '/tools/paragraph-counter',
+    tags: ['paragraph', 'count', 'text', 'analyzer']
+  },
+  {
+    id: 'paraphraser',
+    name: 'Paraphraser',
+    description: 'Paraphrase text with AI',
+    category: 'AI Tools',
+    icon: 'FileText',
+    path: '/tools/paraphraser',
+    tags: ['paraphrase', 'text', 'ai', 'rewrite']
+  },
+  {
+    id: 'password-analyzer',
+    name: 'Password Analyzer',
+    description: 'Analyze password strength and security',
+    category: 'Security Tools',
+    icon: 'Lock',
+    path: '/tools/password-analyzer',
+    tags: ['password', 'analyzer', 'security', 'strength']
+  },
+  {
+    id: 'pdf-tools',
+    name: 'PDF Tools',
+    description: 'Various PDF manipulation tools',
+    category: 'File Tools',
+    icon: 'FileText',
+    path: '/tools/pdf-tools',
+    tags: ['pdf', 'tools', 'manipulate', 'convert']
+  },
+  {
+    id: 'performance-optimization',
+    name: 'Performance Optimization',
+    description: 'Optimize website performance',
+    category: 'Web Tools',
+    icon: 'Gauge',
+    path: '/tools/performance-optimization',
+    tags: ['performance', 'optimization', 'web', 'speed']
+  },
+  {
+    id: 'phone-number-validator',
+    name: 'Phone Number Validator',
+    description: 'Validate phone numbers',
+    category: 'Validators',
+    icon: 'Phone',
+    path: '/tools/phone-number-validator',
+    tags: ['phone', 'number', 'validator', 'check']
+  },
+  {
+    id: 'ping',
+    name: 'Ping Tool',
+    description: 'Ping hosts to check connectivity',
+    category: 'Network Tools',
+    icon: 'Wifi',
+    path: '/tools/ping',
+    tags: ['ping', 'network', 'connectivity', 'tool']
+  },
+  {
+    id: 'plagiarism-checker',
+    name: 'Plagiarism Checker',
+    description: 'Check text for plagiarism',
+    category: 'Text Tools',
+    icon: 'FileText',
+    path: '/tools/plagiarism-checker',
+    tags: ['plagiarism', 'check', 'text', 'originality']
+  },
+  {
+    id: 'port-scanner',
+    name: 'Port Scanner',
+    description: 'Scan open ports on servers',
+    category: 'Network Tools',
+    icon: 'Wifi',
+    path: '/tools/port-scanner',
+    tags: ['port', 'scanner', 'network', 'security']
+  },
+  {
+    id: 'privacy-policy',
+    name: 'Privacy Policy Generator',
+    description: 'Generate privacy policy for websites',
+    category: 'Web Tools',
+    icon: 'FileText',
+    path: '/tools/privacy-policy',
+    tags: ['privacy', 'policy', 'generator', 'legal']
+  },
+  {
+    id: 'qr-code-reader',
+    name: 'QR Code Reader',
+    description: 'Read QR codes from images',
+    category: 'Image Tools',
+    icon: 'Scan',
+    path: '/tools/qr-code-reader',
+    tags: ['qr', 'code', 'reader', 'scan']
+  },
+  {
+    id: 'random-generator',
+    name: 'Random Generator',
+    description: 'Generate random data',
+    category: 'Generator Tools',
+    icon: 'Dice1',
+    path: '/tools/random-generator',
+    tags: ['random', 'generator', 'data', 'tools']
+  },
+  {
+    id: 'regex-generator',
+    name: 'Regex Generator',
+    description: 'Generate regular expressions',
+    category: 'Developer Tools',
+    icon: 'Code',
+    path: '/tools/regex-generator',
+    tags: ['regex', 'generator', 'pattern', 'developer']
+  },
+  {
+    id: 'reverse-ip',
+    name: 'Reverse IP Lookup',
+    description: 'Find domains hosted on an IP address',
+    category: 'Network Tools',
+    icon: 'Globe',
+    path: '/tools/reverse-ip',
+    tags: ['reverse', 'ip', 'lookup', 'domain']
+  },
+  {
+    id: 'reverse-words',
+    name: 'Reverse Words',
+    description: 'Reverse words in text',
+    category: 'Text Tools',
+    icon: 'RotateCcw',
+    path: '/tools/reverse-words',
+    tags: ['reverse', 'words', 'text', 'converter']
+  },
+  {
+    id: 'safe-url',
+    name: 'Safe URL Checker',
+    description: 'Check if URLs are safe',
+    category: 'Security Tools',
+    icon: 'Shield',
+    path: '/tools/safe-url',
+    tags: ['safe', 'url', 'checker', 'security']
+  },
+  {
+    id: 'search-console-simulator',
+    name: 'Search Console Simulator',
+    description: 'Simulate Google Search Console',
+    category: 'SEO Tools',
+    icon: 'Search',
+    path: '/tools/search-console-simulator',
+    tags: ['search', 'console', 'simulator', 'seo']
+  },
+  {
+    id: 'sentence-counter',
+    name: 'Sentence Counter',
+    description: 'Count sentences in text',
+    category: 'Text Tools',
+    icon: 'FileText',
+    path: '/tools/sentence-counter',
+    tags: ['sentence', 'count', 'text', 'analyzer']
+  },
+  {
+    id: 'seo-analyzer',
+    name: 'SEO Analyzer',
+    description: 'Analyze SEO for web pages',
+    category: 'SEO Tools',
+    icon: 'Search',
+    path: '/tools/seo-analyzer',
+    tags: ['seo', 'analyzer', 'web', 'analysis']
+  },
+  {
+    id: 'seo-audit-tool',
+    name: 'SEO Audit Tool',
+    description: 'Perform comprehensive SEO audits',
+    category: 'SEO Tools',
+    icon: 'Search',
+    path: '/tools/seo-audit-tool',
+    tags: ['seo', 'audit', 'tool', 'analysis']
+  },
+  {
+    id: 'seo-content-template',
+    name: 'SEO Content Template',
+    description: 'Generate SEO-optimized content templates',
+    category: 'SEO Tools',
+    icon: 'FileText',
+    path: '/tools/seo-content-template',
+    tags: ['seo', 'content', 'template', 'generator']
+  },
+  {
+    id: 'serp-checker',
+    name: 'SERP Checker',
+    description: 'Check search engine results pages',
+    category: 'SEO Tools',
+    icon: 'Search',
+    path: '/tools/serp-checker',
+    tags: ['serp', 'checker', 'seo', 'search']
+  },
+  {
+    id: 'sha256-generator',
+    name: 'SHA256 Generator',
+    description: 'Generate SHA256 hashes',
+    category: 'Security Tools',
+    icon: 'Fingerprint',
+    path: '/tools/sha256-generator',
+    tags: ['sha256', 'hash', 'generator', 'security']
+  },
+  {
+    id: 'source-code',
+    name: 'Source Code Viewer',
+    description: 'View source code of web pages',
+    category: 'Web Tools',
+    icon: 'Code',
+    path: '/tools/source-code',
+    tags: ['source', 'code', 'viewer', 'web']
+  },
+  {
+    id: 'sql-formatter',
+    name: 'SQL Formatter',
+    description: 'Format and beautify SQL code',
+    category: 'Developer Tools',
+    icon: 'Database',
+    path: '/tools/sql-formatter',
+    tags: ['sql', 'format', 'beautify', 'database']
+  },
+  {
+    id: 'ssl-lookup',
+    name: 'SSL Lookup',
+    description: 'Check SSL certificate information',
+    category: 'Security Tools',
+    icon: 'Lock',
+    path: '/tools/ssl-lookup',
+    tags: ['ssl', 'lookup', 'certificate', 'security']
+  },
+  {
+    id: 'structured-data-generator',
+    name: 'Structured Data Generator',
+    description: 'Generate structured data for SEO',
+    category: 'SEO Tools',
+    icon: 'Code',
+    path: '/tools/structured-data-generator',
+    tags: ['structured', 'data', 'generator', 'seo']
+  },
+  {
+    id: 'suspicious-domain',
+    name: 'Suspicious Domain Checker',
+    description: 'Check if domains are suspicious',
+    category: 'Security Tools',
+    icon: 'Shield',
+    path: '/tools/suspicious-domain',
+    tags: ['suspicious', 'domain', 'checker', 'security']
+  },
+  {
+    id: 'syllable-counter',
+    name: 'Syllable Counter',
+    description: 'Count syllables in text',
+    category: 'Text Tools',
+    icon: 'FileText',
+    path: '/tools/syllable-counter',
+    tags: ['syllable', 'count', 'text', 'analyzer']
+  },
+  {
+    id: 'system-info',
+    name: 'System Information',
+    description: 'Get system information',
+    category: 'System Tools',
+    icon: 'Computer',
+    path: '/tools/system-info',
+    tags: ['system', 'information', 'specs', 'hardware']
+  },
+  {
+    id: 'terms-conditions',
+    name: 'Terms & Conditions Generator',
+    description: 'Generate terms and conditions for websites',
+    category: 'Web Tools',
+    icon: 'FileText',
+    path: '/tools/terms-conditions',
+    tags: ['terms', 'conditions', 'generator', 'legal']
+  },
+  {
+    id: 'text-clustering',
+    name: 'Text Clustering',
+    description: 'Cluster similar text documents',
+    category: 'Text Tools',
+    icon: 'FileText',
+    path: '/tools/text-clustering',
+    tags: ['text', 'clustering', 'similarity', 'analysis']
+  },
+  {
+    id: 'text-complexity',
+    name: 'Text Complexity Analyzer',
+    description: 'Analyze text complexity',
+    category: 'Text Tools',
+    icon: 'FileText',
+    path: '/tools/text-complexity',
+    tags: ['text', 'complexity', 'analyzer', 'readability']
+  },
+  {
+    id: 'text-difference',
+    name: 'Text Difference',
+    description: 'Compare two texts and show differences',
+    category: 'Text Tools',
+    icon: 'GitCompare',
+    path: '/tools/text-difference',
+    tags: ['text', 'difference', 'compare', 'diff']
+  },
+  {
+    id: 'text-entropy',
+    name: 'Text Entropy Calculator',
+    description: 'Calculate entropy of text',
+    category: 'Text Tools',
+    icon: 'FileText',
+    path: '/tools/text-entropy',
+    tags: ['text', 'entropy', 'calculator', 'analysis']
+  },
+  {
+    id: 'token-generator',
+    name: 'Token Generator',
+    description: 'Generate random tokens',
+    category: 'Security Tools',
+    icon: 'Key',
+    path: '/tools/token-generator',
+    tags: ['token', 'generator', 'random', 'security']
+  },
+  {
+    id: 'tools',
+    name: 'Tools Overview',
+    description: 'Overview of all available tools',
+    category: 'System',
+    icon: 'Tool',
+    path: '/tools/tools',
+    tags: ['tools', 'overview', 'system', 'directory']
+  },
+  {
+    id: 'url-rewriting',
+    name: 'URL Rewriting',
+    description: 'Rewrite URLs for SEO',
+    category: 'SEO Tools',
+    icon: 'Link',
+    path: '/tools/url-rewriting',
+    tags: ['url', 'rewriting', 'seo', 'rewrite']
+  },
+  {
+    id: 'utm-link',
+    name: 'UTM Link Builder',
+    description: 'Build UTM tracking links',
+    category: 'Marketing Tools',
+    icon: 'Link',
+    path: '/tools/utm-link',
+    tags: ['utm', 'link', 'builder', 'marketing']
+  },
+  {
+    id: 'video-converter',
+    name: 'Video Converter',
+    description: 'Convert video files between formats',
+    category: 'Media Tools',
+    icon: 'File',
+    path: '/tools/video-converter',
+    tags: ['video', 'converter', 'format', 'media']
+  },
+  {
+    id: 'video-downloader',
+    name: 'Video Downloader',
+    description: 'Download videos from various platforms',
+    category: 'Media Tools',
+    icon: 'File',
+    path: '/tools/video-downloader',
+    tags: ['video', 'downloader', 'download', 'media']
+  },
+  {
+    id: 'web-scraper',
+    name: 'Web Scraper',
+    description: 'Scrape data from websites',
+    category: 'Web Tools',
+    icon: 'Globe',
+    path: '/tools/web-scraper',
+    tags: ['web', 'scraper', 'data', 'extract']
+  },
+  {
+    id: 'website-screenshot',
+    name: 'Website Screenshot',
+    description: 'Take screenshots of websites',
+    category: 'Web Tools',
+    icon: 'Camera',
+    path: '/tools/website-screenshot',
+    tags: ['website', 'screenshot', 'capture', 'image']
+  },
+  {
+    id: 'whatsapp-link',
+    name: 'WhatsApp Link Generator',
+    description: 'Generate WhatsApp links',
+    category: 'Social Media Tools',
+    icon: 'MessageCircle',
+    path: '/tools/whatsapp-link',
+    tags: ['whatsapp', 'link', 'generator', 'social']
+  },
+  {
+    id: 'whois',
+    name: 'WHOIS Lookup',
+    description: 'Lookup WHOIS information for domains',
+    category: 'Network Tools',
+    icon: 'Globe',
+    path: '/tools/whois',
+    tags: ['whois', 'lookup', 'domain', 'network']
+  },
+  {
+    id: 'word-frequency',
+    name: 'Word Frequency Analyzer',
+    description: 'Analyze word frequency in text',
+    category: 'Text Tools',
+    icon: 'FileText',
+    path: '/tools/word-frequency',
+    tags: ['word', 'frequency', 'analyzer', 'text']
+  },
+  {
+    id: 'www-redirect',
+    name: 'WWW Redirect Checker',
+    description: 'Check WWW redirects',
+    category: 'SEO Tools',
+    icon: 'Link',
+    path: '/tools/www-redirect',
+    tags: ['www', 'redirect', 'checker', 'seo']
+  },
+  {
+    id: 'xml-sitemap-generator',
+    name: 'XML Sitemap Generator',
+    description: 'Generate XML sitemaps for SEO',
+    category: 'SEO Tools',
+    icon: 'FileCode',
+    path: '/tools/xml-sitemap-generator',
+    tags: ['xml', 'sitemap', 'generator', 'seo']
+  },
+  {
+    id: 'xml-to-json',
+    name: 'XML to JSON Converter',
+    description: 'Convert XML to JSON format',
+    category: 'Data Tools',
+    icon: 'FileCode',
+    path: '/tools/xml-to-json',
+    tags: ['xml', 'json', 'converter', 'data']
+  },
+  {
+    id: 'yaml-to-json',
+    name: 'YAML to JSON Converter',
+    description: 'Convert YAML to JSON format',
+    category: 'Data Tools',
+    icon: 'FileCode',
+    path: '/tools/yaml-to-json',
+    tags: ['yaml', 'json', 'converter', 'data']
+  },
+  {
+    id: 'youtube-keywords',
+    name: 'YouTube Keywords',
+    description: 'Find keywords for YouTube videos',
+    category: 'SEO Tools',
+    icon: 'Youtube',
+    path: '/tools/youtube-keywords',
+    tags: ['youtube', 'keywords', 'seo', 'video']
+  },
+  {
+    id: 'youtube-thumbnail',
+    name: 'YouTube Thumbnail Downloader',
+    description: 'Download YouTube video thumbnails',
+    category: 'Media Tools',
+    icon: 'Image',
+    path: '/tools/youtube-thumbnail',
+    tags: ['youtube', 'thumbnail', 'download', 'video']
   }
 ]
 

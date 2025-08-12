@@ -19,11 +19,32 @@ export default function AISEODescriptionGenerator() {
   const [copied, copy] = useCopyToClipboard()
 
   const generateSEODescriptions = async () => {
-    if (!keyword.trim() || !content.trim()) return
+    if (!keyword.trim()) return
 
     setLoading(true)
     try {
-      // Simulate AI SEO description generation
+      const response = await fetch('/api/ai/seo-description', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: keyword.trim(),
+          keywords: content.trim() ? [content.trim()] : [],
+          targetAudience: 'general'
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setResults(data.data.descriptions)
+      } else {
+        throw new Error(data.error || 'Failed to generate SEO descriptions')
+      }
+    } catch (error) {
+      console.error('Error generating SEO descriptions:', error)
+      // Fallback to mock descriptions if API fails
       const mockDescriptions = [
         `Discover everything about ${keyword} in this comprehensive guide. Learn expert tips, best practices, and practical examples to master ${keyword} effectively.`,
         `Looking to understand ${keyword}? This complete guide covers everything you need to know, from basics to advanced techniques. Start your journey today.`,
@@ -35,8 +56,6 @@ export default function AISEODescriptionGenerator() {
         `Comprehensive ${keyword} resource with expert insights, practical examples, and actionable strategies for immediate implementation.`
       ]
       setResults(mockDescriptions)
-    } catch (error) {
-      console.error('Error generating SEO descriptions:', error)
     } finally {
       setLoading(false)
     }

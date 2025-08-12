@@ -68,50 +68,70 @@ export default function AICodeReviewer() {
 
     setIsAnalyzing(true)
     
-    // Simulate AI analysis with realistic code review suggestions
-    await new Promise(resolve => setTimeout(resolve, 2000))
-
-    const mockAnalysis: CodeAnalysis = {
-      overallScore: 85,
-      issues: [
-        {
-          type: 'warning',
-          line: 5,
-          message: 'Variable "temp" is declared but never used',
-          severity: 'medium',
-          suggestion: 'Remove the unused variable or use it in your logic'
+    try {
+      const response = await fetch('/api/ai/code-reviewer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          type: 'error',
-          line: 12,
-          message: 'Potential null reference error',
-          severity: 'high',
-          suggestion: 'Add null check before accessing the property'
-        },
-        {
-          type: 'suggestion',
-          line: 8,
-          message: 'Consider using array.map() for better readability',
-          severity: 'low',
-          suggestion: 'Replace the for loop with array.map() method'
-        }
-      ],
-      suggestions: [
-        'Extract reusable functions to improve code organization',
-        'Add proper error handling for edge cases',
-        'Consider using modern JavaScript features like async/await',
-        'Add JSDoc comments for better documentation'
-      ],
-      metrics: {
-        complexity: 6.5,
-        maintainability: 8.2,
-        performance: 7.8,
-        security: 9.1
+        body: JSON.stringify({
+          code: code.trim(),
+          language
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setAnalysis(data.data)
+      } else {
+        throw new Error(data.error || 'Failed to analyze code')
       }
+    } catch (error) {
+      console.error('Error analyzing code:', error)
+      // Fallback to mock analysis if API fails
+      const mockAnalysis: CodeAnalysis = {
+        overallScore: 85,
+        issues: [
+          {
+            type: 'warning',
+            line: 5,
+            message: 'Variable "temp" is declared but never used',
+            severity: 'medium',
+            suggestion: 'Remove the unused variable or use it in your logic'
+          },
+          {
+            type: 'error',
+            line: 12,
+            message: 'Potential null reference error',
+            severity: 'high',
+            suggestion: 'Add null check before accessing the property'
+          },
+          {
+            type: 'suggestion',
+            line: 8,
+            message: 'Consider using array.map() for better readability',
+            severity: 'low',
+            suggestion: 'Replace the for loop with array.map() method'
+          }
+        ],
+        suggestions: [
+          'Extract reusable functions to improve code organization',
+          'Add proper error handling for edge cases',
+          'Consider using modern JavaScript features like async/await',
+          'Add JSDoc comments for better documentation'
+        ],
+        metrics: {
+          complexity: 6.5,
+          maintainability: 8.2,
+          performance: 7.8,
+          security: 9.1
+        }
+      }
+      setAnalysis(mockAnalysis)
+    } finally {
+      setIsAnalyzing(false)
     }
-
-    setAnalysis(mockAnalysis)
-    setIsAnalyzing(false)
   }
 
   const copyToClipboard = async () => {

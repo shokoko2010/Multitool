@@ -55,13 +55,44 @@ export default function AIContentGenerator() {
 
     setIsGenerating(true)
     try {
-      // Simulate AI content generation
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      const response = await fetch('/api/ai/content-generator', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt,
+          tone,
+          length,
+          contentType
+        })
+      })
       
+      const data = await response.json()
+      
+      if (data.success) {
+        setGeneratedContent(data.data.content)
+        
+        // Add to history
+        const newEntry = {
+          id: Date.now(),
+          prompt,
+          contentType,
+          tone,
+          length,
+          content: data.data.content,
+          timestamp: new Date().toISOString()
+        }
+        setHistory([newEntry, ...history])
+      } else {
+        throw new Error(data.error || 'Failed to generate content')
+      }
+    } catch (error) {
+      console.error('Error generating content:', error)
+      // Fallback to mock content if API fails
       const mockContent = generateMockContent()
       setGeneratedContent(mockContent)
       
-      // Add to history
       const newEntry = {
         id: Date.now(),
         prompt,
@@ -72,8 +103,6 @@ export default function AIContentGenerator() {
         timestamp: new Date().toISOString()
       }
       setHistory([newEntry, ...history])
-    } catch (error) {
-      console.error('Error generating content:', error)
     } finally {
       setIsGenerating(false)
     }

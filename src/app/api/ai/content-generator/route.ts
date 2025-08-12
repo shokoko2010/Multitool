@@ -3,7 +3,7 @@ import ZAI from 'z-ai-web-dev-sdk'
 
 export async function POST(request: NextRequest) {
   try {
-    const { prompt, tone = 'professional', length = 'medium' } = await request.json()
+    const { prompt, tone = 'professional', length = 'medium', contentType = 'blog-post' } = await request.json()
 
     if (!prompt) {
       return NextResponse.json(
@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     const zai = await ZAI.create()
 
     const systemPrompt = `You are a professional content writer. Generate high-quality content based on the user's request. 
+    Content Type: ${contentType}
     Tone: ${tone}
     Length: ${length}
     Make the content engaging, informative, and well-structured.`
@@ -41,7 +42,8 @@ export async function POST(request: NextRequest) {
       data: {
         content: generatedContent,
         tone,
-        length
+        length,
+        contentType
       }
     })
   } catch (error) {

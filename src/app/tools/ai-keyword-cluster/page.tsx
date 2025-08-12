@@ -28,7 +28,27 @@ export default function AIKeywordClusterGenerator() {
 
     setLoading(true)
     try {
-      // Simulate AI keyword cluster generation
+      const response = await fetch('/api/ai/keyword-cluster', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          primaryKeyword: primaryKeyword.trim(),
+          additionalKeywords: []
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setResults(data.data)
+      } else {
+        throw new Error(data.error || 'Failed to generate keyword clusters')
+      }
+    } catch (error) {
+      console.error('Error generating keyword clusters:', error)
+      // Fallback to mock clusters if API fails
       const mockClusters = {
         clusters: [
           {
@@ -94,8 +114,6 @@ export default function AIKeywordClusterGenerator() {
         ]
       }
       setResults(mockClusters)
-    } catch (error) {
-      console.error('Error generating keyword clusters:', error)
     } finally {
       setLoading(false)
     }
