@@ -3,341 +3,237 @@
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Link, RefreshCw } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Copy, Link, Lock, Unlock } from 'lucide-react'
+import { toast } from '@/hooks/use-toast'
 
-export default function UrlEncoderTool() {
-  const [url, setUrl] = useState('')
-  const [encodedUrl, setEncodedUrl] = useState('')
-  const [decodedUrl, setDecodedUrl] = useState('')
-  const [params, setParams] = useState('')
-  const [encodedParams, setEncodedParams] = useState('')
-  const { toast } = useToast()
+export default function UrlEncoder() {
+  const [inputText, setInputText] = useState('')
+  const [encodedResult, setEncodedResult] = useState('')
+  const [decodedResult, setDecodedResult] = useState('')
 
   const encodeUrl = () => {
+    if (!inputText.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter text to encode",
+        variant: "destructive"
+      })
+      return
+    }
+
     try {
-      const encoded = encodeURIComponent(url)
-      setEncodedUrl(encoded)
+      const encoded = encodeURIComponent(inputText)
+      setEncodedResult(encoded)
     } catch (error) {
       toast({
-        title: "Encoding Error",
-        description: "Invalid URL format",
-        variant: "destructive",
+        title: "Error",
+        description: "Failed to encode URL",
+        variant: "destructive"
       })
     }
   }
 
   const decodeUrl = () => {
+    if (!inputText.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter URL to decode",
+        variant: "destructive"
+      })
+      return
+    }
+
     try {
-      const decoded = decodeURIComponent(url)
-      setDecodedUrl(decoded)
+      const decoded = decodeURIComponent(inputText)
+      setDecodedResult(decoded)
     } catch (error) {
       toast({
-        title: "Decoding Error",
-        description: "Invalid encoded URL format",
-        variant: "destructive",
+        title: "Error",
+        description: "Invalid URL encoding",
+        variant: "destructive"
       })
     }
   }
 
-  const encodeParams = () => {
-    try {
-      const paramsArray = params.split('&').filter(param => param.trim())
-      const encodedParamsArray = paramsArray.map(param => {
-        const [key, ...values] = param.split('=')
-        const value = values.join('=')
-        return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
-      })
-      setEncodedParams(encodedParamsArray.join('&'))
-    } catch (error) {
-      toast({
-        title: "Encoding Error",
-        description: "Invalid parameter format",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const copyToClipboard = (text: string, label: string) => {
+  const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     toast({
       title: "Copied!",
-      description: `${label} copied to clipboard`,
+      description: "Text copied to clipboard"
     })
   }
 
-  const swapEncodeDecode = () => {
-    const temp = url
-    setUrl(encodedUrl)
-    setEncodedUrl(temp)
-  }
-
-  const swapParamsEncodeDecode = () => {
-    const temp = params
-    setParams(encodedParams)
-    setEncodedParams(temp)
-  }
-
-  const loadSampleUrl = () => {
-    setUrl('https://example.com/search?q=hello world&category=web development')
-  }
-
-  const loadSampleParams = () => {
-    setParams('name=John Doe&email=john@example.com&message=Hello World!')
+  const clearAll = () => {
+    setInputText('')
+    setEncodedResult('')
+    setDecodedResult('')
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold">URL Encoder/Decoder</h1>
-        <p className="text-muted-foreground">
-          Encode and decode URLs and URL parameters safely
-        </p>
+    <div className="container mx-auto p-6 max-w-4xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">URL Encoder/Decoder</h1>
+        <p className="text-muted-foreground">Encode and decode URL strings for web applications</p>
       </div>
 
-      <Tabs defaultValue="url" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="url">URL Encode/Decode</TabsTrigger>
-          <TabsTrigger value="params">Parameters Encode/Decode</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="url" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* URL Input */}
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Link className="h-5 w-5" />
+              Input Text
+            </CardTitle>
+            <CardDescription>Enter text to encode or decode</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              placeholder="Enter text to encode or decode..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              className="min-h-[120px]"
+            />
+          </CardContent>
+        </Card>
+
+        <Tabs defaultValue="encode" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="encode" className="flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              Encode
+            </TabsTrigger>
+            <TabsTrigger value="decode" className="flex items-center gap-2">
+              <Unlock className="h-4 w-4" />
+              Decode
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="encode" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Link className="h-5 w-5" />
-                  Input URL
-                </CardTitle>
+                <CardTitle>URL Encoding</CardTitle>
                 <CardDescription>
-                  Enter the URL you want to encode or decode
+                  Convert special characters to URL-safe format
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Textarea
-                  placeholder="Enter URL here..."
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  className="min-h-[120px] resize-none"
-                />
+                <Button onClick={encodeUrl} className="w-full">
+                  <Lock className="h-4 w-4 mr-2" />
+                  Encode URL
+                </Button>
                 
-                <div className="flex gap-2">
-                  <Button onClick={loadSampleUrl} variant="outline" className="flex-1">
-                    Load Sample
-                  </Button>
-                  <Button onClick={swapEncodeDecode} variant="outline" className="flex-1">
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Swap
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-2">
-                  <Button onClick={encodeUrl} className="flex-1">
-                    Encode URL
-                  </Button>
-                  <Button onClick={decodeUrl} variant="outline" className="flex-1">
-                    Decode URL
-                  </Button>
-                </div>
+                {encodedResult && (
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Textarea
+                        value={encodedResult}
+                        readOnly
+                        className="min-h-[120px] font-mono text-sm"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => copyToClipboard(encodedResult)}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      <p>Original: {inputText.length} characters</p>
+                      <p>Encoded: {encodedResult.length} characters</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
+          </TabsContent>
 
-            {/* URL Output */}
+          <TabsContent value="decode" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Link className="h-5 w-5" />
-                  Result
-                </CardTitle>
+                <CardTitle>URL Decoding</CardTitle>
                 <CardDescription>
-                  Encoded or decoded URL result
+                  Convert URL-encoded text back to original format
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Result</Label>
-                  <div className="relative">
-                    <Input
-                      value={encodedUrl}
-                      readOnly
-                      className="font-mono"
-                    />
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="absolute right-1 top-1 h-8 w-8 p-0"
-                      onClick={() => copyToClipboard(encodedUrl, 'URL')}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+                <Button onClick={decodeUrl} className="w-full">
+                  <Unlock className="h-4 w-4 mr-2" />
+                  Decode URL
+                </Button>
                 
-                <div className="text-sm text-muted-foreground">
-                  <p><strong>Tip:</strong> URLs containing spaces or special characters need to be encoded for web compatibility.</p>
-                  <p className="mt-1">Common characters that need encoding: space ( ), ampersand (&), equals (=), question mark (?), hash (#)</p>
-                </div>
+                {decodedResult && (
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Textarea
+                        value={decodedResult}
+                        readOnly
+                        className="min-h-[120px]"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => copyToClipboard(decodedResult)}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      <p>Encoded: {inputText.length} characters</p>
+                      <p>Decoded: {decodedResult.length} characters</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
-          </div>
+          </TabsContent>
+        </Tabs>
 
-          {/* Examples */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Common URL Encoding Examples</CardTitle>
-              <CardDescription>
-                See how common characters and symbols are encoded
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[
-                  { original: 'hello world', encoded: 'hello%20world' },
-                  { original: 'user@example.com', encoded: 'user%40example.com' },
-                  { original: 'search?q=javascript', encoded: 'search%3Fq%3Djavascript' },
-                  { original: 'file name.txt', encoded: 'file%20name.txt' },
-                  { original: '100% complete', encoded: '100%25%20complete' },
-                  { original: 'path/to/file', encoded: 'path%2Fto%2Ffile' }
-                ].map((example, index) => (
-                  <div key={index} className="p-3 bg-muted rounded-lg space-y-1">
-                    <div className="text-sm font-semibold">Original:</div>
-                    <div className="text-xs font-mono">{example.original}</div>
-                    <div className="text-sm font-semibold mt-2">Encoded:</div>
-                    <div className="text-xs font-mono text-blue-600">{example.encoded}</div>
-                  </div>
-                ))}
+        <Card>
+          <CardHeader>
+            <CardTitle>URL Encoding Reference</CardTitle>
+            <CardDescription>Common URL encoding examples</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="space-y-2">
+                <h4 className="font-semibold">Common Encodings</h4>
+                <div className="space-y-1 font-mono text-xs">
+                  <div>Space → %20</div>
+                  <div>! → %21</div>
+                  <div># → %23</div>
+                  <div>$ → %24</div>
+                  <div>% → %25</div>
+                  <div>& → %26</div>
+                  <div>+ → %2B</div>
+                  <div>/ → %2F</div>
+                  <div>? → %3F</div>
+                  <div>= → %3D</div>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="params" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Parameters Input */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Link className="h-5 w-5" />
-                  URL Parameters
-                </CardTitle>
-                <CardDescription>
-                  Enter URL parameters (key=value pairs separated by &)
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Textarea
-                  placeholder="Enter parameters here..."
-                  value={params}
-                  onChange={(e) => setParams(e.target.value)}
-                  className="min-h-[120px] resize-none"
-                />
-                
-                <div className="flex gap-2">
-                  <Button onClick={loadSampleParams} variant="outline" className="flex-1">
-                    Load Sample
-                  </Button>
-                  <Button onClick={swapParamsEncodeDecode} variant="outline" className="flex-1">
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Swap
-                  </Button>
+              
+              <div className="space-y-2">
+                <h4 className="font-semibold">Example</h4>
+                <div className="bg-muted p-3 rounded text-xs">
+                  <div className="mb-2"><strong>Original:</strong></div>
+                  <div className="mb-2">Hello World! How are you?</div>
+                  <div className="mb-2"><strong>Encoded:</strong></div>
+                  <div>Hello%20World!%20How%20are%20you%3F</div>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-2">
-                  <Button onClick={encodeParams} className="flex-1">
-                    Encode Params
-                  </Button>
-                  <Button onClick={() => {
-                    try {
-                      const decoded = decodeURIComponent(params.replace(/\+/g, ' '))
-                      setEncodedParams(decoded)
-                    } catch (error) {
-                      toast({
-                        title: "Decoding Error",
-                        description: "Invalid encoded parameters format",
-                        variant: "destructive",
-                      })
-                    }
-                  }} variant="outline" className="flex-1">
-                    Decode Params
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Parameters Output */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Link className="h-5 w-5" />
-                  Encoded Parameters
-                </CardTitle>
-                <CardDescription>
-                  URL-safe encoded parameters
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Result</Label>
-                  <div className="relative">
-                    <Input
-                      value={encodedParams}
-                      readOnly
-                      className="font-mono"
-                    />
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="absolute right-1 top-1 h-8 w-8 p-0"
-                      onClick={() => copyToClipboard(encodedParams, 'Parameters')}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="text-sm text-muted-foreground">
-                  <p><strong>Tip:</strong> URL parameters should be encoded when included in URLs to ensure proper transmission and parsing.</p>
-                  <p className="mt-1">Special characters in parameter values: space, &, =, ?, #, %, etc.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Parameter Examples */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Parameter Encoding Examples</CardTitle>
-              <CardDescription>
-                See how common parameter values are encoded
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { original: 'name=John Doe', encoded: 'name=John%20Doe' },
-                  { original: 'email=user@example.com', encoded: 'email=user%40example.com' },
-                  { original: 'search=hello world', encoded: 'search=hello%20world' },
-                  { original: 'file=path/to/file.txt', encoded: 'file=path%2Fto%2Ffile.txt' },
-                  { original: 'query=what?when?how', encoded: 'query=what%3Fwhen%3Fhow' },
-                  { original: 'data=100% complete', encoded: 'data=100%25%20complete' }
-                ].map((example, index) => (
-                  <div key={index} className="p-3 bg-muted rounded-lg space-y-1">
-                    <div className="text-sm font-semibold">Original:</div>
-                    <div className="text-xs font-mono">{example.original}</div>
-                    <div className="text-sm font-semibold mt-2">Encoded:</div>
-                    <div className="text-xs font-mono text-blue-600">{example.encoded}</div>
-                  </div>
-                ))}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex gap-2">
+          <Button onClick={clearAll} variant="outline" className="flex-1">
+            Clear All
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
