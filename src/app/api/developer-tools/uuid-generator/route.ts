@@ -1,297 +1,333 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ZAI from 'z-ai-web-dev-sdk';
-
-interface UUIDOptions {
-  version?: 1 | 2 | 3 | 4 | 5 | 'nil' | 'max';
-  count?: number;
-  format?: 'standard' | 'hex' | 'urn' | 'bytes' | 'base64';
-  uppercase?: boolean;
-  removeDashes?: boolean;
-}
-
-interface UUIDResult {
-  success: boolean;
-  data?: {
-    uuids: string[];
-    options: UUIDOptions;
-    metadata: {
-      version: string;
-      count: number;
-      format: string;
-      generatedAt: string;
-    };
-    validation?: {
-      isValid: boolean;
-      variant?: string;
-      version?: number;
-    };
-  };
-  error?: string;
-  analysis?: string;
-}
+import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
-    const { options = {} } = await request.json();
+    const body = await request.json();
+    const {
+      version = '4',
+      quantity = 1,
+      uppercase = false,
+      removeDashes = false,
+      namespace,
+      name,
+      validate = false
+    } = body;
 
-    // Set default options
-    const uuidOptions: UUIDOptions = {
-      version: options.version || 4,
-      count: Math.min(Math.max(options.count || 1, 1), 100),
-      format: options.format || 'standard',
-      uppercase: options.uppercase || false,
-      removeDashes: options.removeDashes || false
-    };
-
-    // Validate options
-    if (uuidOptions.count < 1 || uuidOptions.count > 100) {
-      return NextResponse.json<UUIDResult>({
-        success: false,
-        error: 'Count must be between 1 and 100'
-      }, { status: 400 });
+    // Input validation
+    if (!['1', '3', '4', '5', 'nil'].includes(version)) {
+      return NextResponse.json(
+        { error: 'Version must be 1, 3, 4, 5, or nil' },
+        { status: 400 }
+      );
     }
 
-    const validVersions = [1, 2, 3, 4, 5, 'nil', 'max'];
-    if (!validVersions.includes(uuidOptions.version!)) {
-      return NextResponse.json<UUIDResult>({
-        success: false,
-        error: 'Invalid UUID version. Use: 1, 2, 3, 4, 5, nil, or max'
-      }, { status: 400 });
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 1000) {
+      return NextResponse.json(
+        { error: 'Quantity must be between 1 and 1000' },
+        { status: 400 }
+      );
+    }
+
+    if (typeof uppercase !== 'boolean' || typeof removeDashes !== 'boolean' || typeof validate !== 'boolean') {
+      return NextResponse.json(
+        { error: 'All boolean flags must be boolean values' },
+        { status: 400 }
+      );
+    }
+
+    if ((version === '3' || version === '5') && (!namespace || !name)) {
+      return NextResponse.json(
+        { error: 'Namespace and name are required for UUID v3 and v5' },
+        { status: 400 }
+      );
     }
 
     // Generate UUIDs
     const uuids: string[] = [];
-    for (let i = 0; i < uuidOptions.count!; i++) {
-      const uuid = generateUUID(uuidOptions.version!);
-      const formattedUUID = formatUUID(uuid, uuidOptions);
-      uuids.push(formattedUUID);
+    const validationResults: any[] = [];
+
+    for (let i = 0; i < quantity; i++) {
+      let uuid: string;
+
+      switch (version) {
+        case '1':
+          uuid = generateUUIDv1();
+          break;
+        case '3':
+          uuid = generateUUIDv3(namespace!, name!);
+          break;
+        case '4':
+          uuid = generateUUIDv4();
+          break;
+        case '5':
+          uuid = generateUUIDv5(namespace!, name!);
+          break;
+        case 'nil':
+          uuid = '00000000-0000-0000-0000-000000000000';
+          break;
+        default:
+          uuid = generateUUIDv4();
+      }
+
+      // Apply formatting options
+      if (removeDashes) {
+        uuid = uuid.replace(/-/g, '');
+      }
+      if (uppercase) {
+        uuid = uuid.toUpperCase();
+      }
+
+      uuids.push(uuid);
+
+      // Validate UUID if requested
+      if (validate) {
+        const validation = validateUUID(uuid);
+        validationResults.push(validation);
+      }
     }
 
-    const metadata = {
-      version: String(uuidOptions.version),
-      count: uuidOptions.count,
-      format: uuidOptions.format,
+    // UUID information and analysis
+    const uuidInfo = {
+      version,
+      versionDescription: getVersionDescription(version),
+      quantity,
+      formatting: {
+        uppercase,
+        removeDashes,
+        format: removeDashes ? (uppercase ? 'UPPERCASE_NO_DASHES' : 'lowercase_no_dashes') : 
+                (uppercase ? 'UPPERCASE' : 'standard')
+      },
       generatedAt: new Date().toISOString()
     };
 
-    // Validate the first UUID (if not nil or max)
-    let validation;
-    if (uuidOptions.version !== 'nil' && uuidOptions.version !== 'max') {
-      validation = validateUUID(uuids[0]);
-    }
-
-    const result = {
-      uuids,
-      options: uuidOptions,
-      metadata,
-      validation
-    };
-
-    // AI Analysis
-    let analysis = '';
+    // Try to get AI insights
+    let aiInsights = null;
     try {
       const zai = await ZAI.create();
-      const analysisResponse = await zai.chat.completions.create({
+      const insights = await zai.chat.completions.create({
         messages: [
           {
             role: 'system',
-            content: 'You are a UUID expert. Analyze the UUID generation parameters and provide insights about the chosen version, use cases, and best practices for UUID usage.'
+            content: 'You are a UUID and distributed systems expert. Analyze the UUID generation and provide insights about UUID usage, best practices, and applications.'
           },
           {
             role: 'user',
-            content: `Analyze this UUID generation:\n\nVersion: ${metadata.version}\nCount: ${metadata.count}\nFormat: ${metadata.format}\nGenerated At: ${metadata.generatedAt}\n\nSample UUID: ${uuids[0]}\n\nOptions: ${JSON.stringify(uuidOptions, null, 2)}`
+            content: `Generated ${quantity} UUID v${version} with ${uppercase ? 'uppercase' : 'lowercase'} ${removeDashes ? 'without dashes' : 'with dashes'}. ${version === 'nil' ? 'Generated nil UUIDs for testing purposes.' : ''} Provide insights about UUID usage, collision probability, and best practices for distributed systems.`
           }
         ],
         max_tokens: 300,
-        temperature: 0.7
+        temperature: 0.3
       });
-
-      analysis = analysisResponse.choices[0]?.message?.content || '';
+      aiInsights = insights.choices[0]?.message?.content || null;
     } catch (error) {
-      console.error('AI analysis failed:', error);
+      console.warn('AI insights failed:', error);
     }
 
-    return NextResponse.json<UUIDResult>({
+    const result = {
       success: true,
-      data: result,
-      analysis
+      uuids,
+      info: uuidInfo
+    };
+
+    if (validate) {
+      result.validation = validationResults;
+    }
+
+    return NextResponse.json({
+      ...result,
+      aiInsights
     });
 
   } catch (error) {
     console.error('UUID generation error:', error);
-    return NextResponse.json<UUIDResult>({
-      success: false,
-      error: 'Internal server error during UUID generation'
-    }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to generate UUIDs' },
+      { status: 500 }
+    );
   }
 }
 
-function generateUUID(version: number | 'nil' | 'max'): string {
-  switch (version) {
-    case 'nil':
-      return '00000000-0000-0000-0000-000000000000';
-    case 'max':
-      return 'ffffffff-ffff-ffff-ffff-ffffffffffff';
-    case 1:
-      return generateUUIDv1();
-    case 2:
-      return generateUUIDv2();
-    case 3:
-      return generateUUIDv3();
-    case 4:
-      return generateUUIDv4();
-    case 5:
-      return generateUUIDv5();
-    default:
-      return generateUUIDv4(); // Default to v4
-  }
-}
-
+// UUID generation functions
 function generateUUIDv1(): string {
-  // Simplified UUID v1 generation (timestamp-based)
-  const timestamp = Date.now();
-  const randomBytes = crypto.getRandomValues(new Uint8Array(8));
+  const buffer = crypto.randomBytes(16);
   
-  return [
-    timestamp.toString(16).padStart(8, '0'),
-    (timestamp & 0xffff0000).toString(16).padStart(4, '0'),
-    '1' + ((timestamp >> 48) & 0x0fff).toString(16).padStart(3, '0'),
-    '8' + (randomBytes[0] & 0x3f).toString(16).padStart(2, '0'),
-    Array.from(randomBytes.slice(1)).map(b => b.toString(16).padStart(2, '0')).join('')
-  ].join('-');
+  // Set version (1) and variant bits
+  buffer[6] = (buffer[6] & 0x0f) | 0x10; // Version 1
+  buffer[8] = (buffer[8] & 0x3f) | 0x80; // Variant 1
+
+  // Get timestamp (100-nanosecond intervals since 1582-10-15)
+  const timestamp = Date.now() * 10000 + 122192928000000000;
+  const timeLow = timestamp & 0xffffffff;
+  const timeMid = (timestamp >> 32) & 0xffff;
+  const timeHi = (timestamp >> 48) & 0x0fff;
+
+  // Set time fields
+  buffer.writeUInt32LE(timeLow, 0);
+  buffer.writeUInt16LE(timeMid, 4);
+  buffer.writeUInt16LE(timeHi, 6);
+
+  // Format as UUID string
+  return formatUUID(buffer);
 }
 
-function generateUUIDv2(): string {
-  // UUID v2 (DCE Security) - simplified implementation
-  return generateUUIDv1().replace(/^.{13}/, '2' + generateUUIDv1().substring(1, 13));
-}
+function generateUUIDv3(namespace: string, name: string): string {
+  // Generate namespace UUID if it's a well-known namespace
+  let namespaceBuffer: Buffer;
+  const wellKnownNamespaces: Record<string, string> = {
+    'dns': '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    'url': '6ba7b811-9dad-11d1-80b4-00c04fd430c8',
+    'oid': '6ba7b812-9dad-11d1-80b4-00c04fd430c8',
+    'x500': '6ba7b814-9dad-11d1-80b4-00c04fd430c8'
+  };
 
-function generateUUIDv3(): string {
-  // UUID v3 (MD5 hash) - simplified implementation
-  const namespace = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'; // DNS namespace
-  const name = 'example.com';
-  const hash = simpleHash(namespace + name);
-  
-  return [
-    hash.toString(16).padStart(8, '0'),
-    (hash >> 32).toString(16).padStart(4, '0'),
-    '3' + ((hash >> 48) & 0x0fff).toString(16).padStart(3, '0'),
-    '8' + ((hash >> 60) & 0x3f).toString(16).padStart(2, '0'),
-    (hash >> 16).toString(16).padStart(12, '0')
-  ].join('-');
+  if (wellKnownNamespaces[namespace.toLowerCase()]) {
+    namespaceBuffer = Buffer.from(wellKnownNamespaces[namespace.toLowerCase()].replace(/-/g, ''), 'hex');
+  } else {
+    // Assume it's a UUID string
+    namespaceBuffer = Buffer.from(namespace.replace(/-/g, ''), 'hex');
+  }
+
+  // Concatenate namespace and name
+  const nameBuffer = Buffer.from(name, 'utf8');
+  const combined = Buffer.concat([namespaceBuffer, nameBuffer]);
+
+  // Generate MD5 hash
+  const hash = crypto.createHash('md5').update(combined).digest();
+
+  // Set version (3) and variant bits
+  hash[6] = (hash[6] & 0x0f) | 0x30; // Version 3
+  hash[8] = (hash[8] & 0x3f) | 0x80; // Variant 1
+
+  return formatUUID(hash);
 }
 
 function generateUUIDv4(): string {
-  // UUID v4 (random)
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  const buffer = crypto.randomBytes(16);
   
-  return [
-    bytes[0].toString(16).padStart(2, '0') + bytes[1].toString(16).padStart(2, '0') +
-    bytes[2].toString(16).padStart(2, '0') + bytes[3].toString(16).padStart(2, '0'),
-    bytes[4].toString(16).padStart(2, '0') + bytes[5].toString(16).padStart(2, '0'),
-    '4' + (bytes[6] & 0x0f).toString(16).padStart(1, '0') + bytes[7].toString(16).padStart(2, '0'),
-    '8' + (bytes[8] & 0x3f).toString(16).padStart(2, '0'),
-    bytes[9].toString(16).padStart(2, '0') + bytes[10].toString(16).padStart(2, '0') +
-    bytes[11].toString(16).padStart(2, '0') + bytes[12].toString(16).padStart(2, '0') +
-    bytes[13].toString(16).padStart(2, '0') + bytes[14].toString(16).padStart(2, '0') +
-    bytes[15].toString(16).padStart(2, '0')
-  ].join('-');
+  // Set version (4) and variant bits
+  buffer[6] = (buffer[6] & 0x0f) | 0x40; // Version 4
+  buffer[8] = (buffer[8] & 0x3f) | 0x80; // Variant 1
+
+  return formatUUID(buffer);
 }
 
-function generateUUIDv5(): string {
-  // UUID v5 (SHA-1 hash) - simplified implementation
-  const namespace = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'; // DNS namespace
-  const name = 'example.com';
-  const hash = simpleHash(namespace + name);
-  
-  return [
-    hash.toString(16).padStart(8, '0'),
-    (hash >> 32).toString(16).padStart(4, '0'),
-    '5' + ((hash >> 48) & 0x0fff).toString(16).padStart(3, '0'),
-    '8' + ((hash >> 60) & 0x3f).toString(16).padStart(2, '0'),
-    (hash >> 16).toString(16).padStart(12, '0')
-  ].join('-');
+function generateUUIDv5(namespace: string, name: string): string {
+  // Generate namespace UUID if it's a well-known namespace
+  let namespaceBuffer: Buffer;
+  const wellKnownNamespaces: Record<string, string> = {
+    'dns': '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    'url': '6ba7b811-9dad-11d1-80b4-00c04fd430c8',
+    'oid': '6ba7b812-9dad-11d1-80b4-00c04fd430c8',
+    'x500': '6ba7b814-9dad-11d1-80b4-00c04fd430c8'
+  };
+
+  if (wellKnownNamespaces[namespace.toLowerCase()]) {
+    namespaceBuffer = Buffer.from(wellKnownNamespaces[namespace.toLowerCase()].replace(/-/g, ''), 'hex');
+  } else {
+    // Assume it's a UUID string
+    namespaceBuffer = Buffer.from(namespace.replace(/-/g, ''), 'hex');
+  }
+
+  // Concatenate namespace and name
+  const nameBuffer = Buffer.from(name, 'utf8');
+  const combined = Buffer.concat([namespaceBuffer, nameBuffer]);
+
+  // Generate SHA-1 hash
+  const hash = crypto.createHash('sha1').update(combined).digest();
+
+  // Set version (5) and variant bits
+  hash[6] = (hash[6] & 0x0f) | 0x50; // Version 5
+  hash[8] = (hash[8] & 0x3f) | 0x80; // Variant 1
+
+  return formatUUID(hash.slice(0, 16));
 }
 
-function formatUUID(uuid: string, options: UUIDOptions): string {
-  let formatted = uuid;
-
-  // Apply formatting options
-  if (options.removeDashes) {
-    formatted = formatted.replace(/-/g, '');
-  }
-
-  if (options.uppercase) {
-    formatted = formatted.toUpperCase();
-  }
-
-  // Apply specific format
-  switch (options.format) {
-    case 'hex':
-      formatted = formatted.replace(/-/g, '');
-      break;
-    case 'urn':
-      formatted = `urn:uuid:${formatted}`;
-      break;
-    case 'bytes':
-      // Convert to bytes representation
-      const hex = formatted.replace(/-/g, '');
-      const bytes = [];
-      for (let i = 0; i < hex.length; i += 2) {
-        bytes.push(parseInt(hex.substr(i, 2), 16));
-      }
-      formatted = bytes.join(',');
-      break;
-    case 'base64':
-      // Convert to base64
-      const hexStr = formatted.replace(/-/g, '');
-      const buffer = Buffer.from(hexStr, 'hex');
-      formatted = buffer.toString('base64');
-      break;
-  }
-
-  return formatted;
+function formatUUID(buffer: Buffer): string {
+  const hex = buffer.toString('hex');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
 }
 
-function validateUUID(uuid: string) {
+function validateUUID(uuid: string): { isValid: boolean; version?: string; variant?: string; error?: string } {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  const isValid = uuidRegex.test(uuid);
   
-  if (!isValid) {
-    return { isValid: false };
+  if (!uuidRegex.test(uuid)) {
+    return { isValid: false, error: 'Invalid UUID format' };
   }
 
+  const cleanUUID = uuid.replace(/-/g, '');
+  const buffer = Buffer.from(cleanUUID, 'hex');
+  
   // Extract version
-  const version = parseInt(uuid[14], 16);
+  const version = (buffer[6] & 0xf0) >> 4;
   
   // Extract variant
-  const variantByte = parseInt(uuid[19], 16);
-  let variant = '';
-  if ((variantByte & 0x80) === 0x00) variant = 'NCS (backward compatibility)';
-  else if ((variantByte & 0xc0) === 0x80) variant = 'RFC 4122';
-  else if ((variantByte & 0xe0) === 0xc0) variant = 'Microsoft GUID';
-  else if ((variantByte & 0xe0) === 0xe0) variant = 'reserved for future definition';
+  const variant = buffer[8] & 0xc0;
+  let variantName: string;
+  
+  if (variant === 0x80) variantName = 'RFC 4122';
+  else if (variant === 0xc0) variantName = 'Microsoft';
+  else if (variant === 0xe0) variantName = 'Future';
+  else variantName = 'Reserved';
 
   return {
     isValid: true,
-    variant,
-    version
+    version: version.toString(),
+    variant: variantName
   };
 }
 
-function simpleHash(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  return Math.abs(hash);
+function getVersionDescription(version: string): string {
+  const descriptions = {
+    '1': 'Time-based UUID with MAC address',
+    '3': 'MD5 hash-based UUID with namespace',
+    '4': 'Random UUID',
+    '5': 'SHA-1 hash-based UUID with namespace',
+    'nil': 'Nil UUID (all zeros)'
+  };
+  return descriptions[version as keyof typeof descriptions] || 'Unknown';
 }
 
 export async function GET() {
   return NextResponse.json({
-    success: false,
-    error: 'POST method required with options'
-  }, { status: 405 });
+    message: 'UUID Generator API',
+    usage: 'POST /api/developer-tools/uuid-generator',
+    parameters: {
+      version: 'UUID version: 1, 3, 4, 5, or nil (default: 4) - optional',
+      quantity: 'Number of UUIDs to generate (1-1000, default: 1) - optional',
+      uppercase: 'Output in uppercase (default: false) - optional',
+      removeDashes: 'Remove dashes from output (default: false) - optional',
+      namespace: 'Namespace for v3/v5 (required for v3/v5) - optional',
+      name: 'Name for v3/v5 (required for v3/v5) - optional',
+      validate: 'Validate generated UUIDs (default: false) - optional'
+    },
+    versions: {
+      '1': 'Time-based UUID (timestamp + MAC address)',
+      '3': 'MD5 namespace-based UUID',
+      '4': 'Random UUID (recommended)',
+      '5': 'SHA-1 namespace-based UUID',
+      'nil': 'Nil UUID (all zeros)'
+    },
+    wellKnownNamespaces: {
+      'dns': 'DNS namespace',
+      'url': 'URL namespace',
+      'oid': 'OID namespace',
+      'x500': 'X.500 DN namespace'
+    },
+    examples: [
+      {
+        version: '4',
+        quantity: 5,
+        uppercase: false,
+        removeDashes: false
+      },
+      {
+        version: '5',
+        namespace: 'dns',
+        name: 'example.com',
+        quantity: 1
+      }
+    ]
+  });
 }
