@@ -1,289 +1,296 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ToolLayout } from '@/components/tools/ToolLayout'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Copy, Key, RefreshCw, Trash2 } from 'lucide-react'
-import { toast } from '@/hooks/use-toast'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Copy, Download, Key, RotateCcw, RefreshCw } from 'lucide-react'
+import { useToolAccess } from '@/hooks/useToolAccess'
 
 export default function UuidGenerator() {
-  const [uuidVersion, setUuidVersion] = useState('4')
-  const [uuidCount, setUuidCount] = useState(1)
-  const [uuids, setUuids] = useState<string[]>([])
-  const [customNamespace, setCustomNamespace] = useState('')
+  const [output, setOutput] = useState('')
+  const [uuidVersion, setUuidVersion] = useState('v4')
+  const [quantity, setQuantity] = useState(1)
+  const [error, setError] = useState<string | null>(null)
+  
+  const { trackUsage } = useToolAccess('uuid-generator')
 
-  const generateUUIDv4 = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0
-      const v = c === 'x' ? r : (r & 0x3 | 0x8)
-      return v.toString(16)
-    })
+  const generateUuid = async () => {
+    try {
+      // Track usage before generating
+      await trackUsage()
+
+      const uuids = []
+      for (let i = 0; i < quantity; i++) {
+        let uuid
+        switch (uuidVersion) {
+          case 'v1':
+            uuid = generateUUIDv1()
+            break
+          case 'v4':
+            uuid = generateUUIDv4()
+            break
+          case 'v5':
+            uuid = generateUUIDv5('dns', 'example.com')
+            break
+          default:
+            uuid = generateUUIDv4()
+        }
+        uuids.push(uuid)
+      }
+
+      setOutput(uuids.join('\n'))
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'UUID generation failed')
+      setOutput('')
+    }
   }
 
-  const generateUUIDv1 = () => {
+  const generateUUIDv1 = (): string => {
+    // Generate a version 1 UUID (timestamp-based)
     const timestamp = Date.now()
-    const randomBytes = new Array(16).fill(0).map(() => Math.floor(Math.random() * 256))
+    const randomBytes = new Uint8Array(8)
+    crypto.getRandomValues(randomBytes)
     
-    // Set version (1) and variant bits
-    randomBytes[6] = (randomBytes[6] & 0x0f) | 0x10
-    randomBytes[8] = (randomBytes[8] & 0x3f) | 0x80
-
-    const timeLow = (timestamp & 0xffffffff)
-    const timeMid = ((timestamp >> 32) & 0xffff)
-    const timeHi = ((timestamp >> 48) & 0x0fff)
+    // Format as UUID v1
+    const timeLow = timestamp & 0xFFFFFFFF
+    const timeMid = (timestamp >> 32) & 0xFFFF
+    const timeHi = (timestamp >> 48) & 0x0FFF
     
     return [
       timeLow.toString(16).padStart(8, '0'),
       timeMid.toString(16).padStart(4, '0'),
-      timeHi.toString(16).padStart(4, '0'),
-      randomBytes.slice(8, 10).map(b => b.toString(16).padStart(2, '0')).join(''),
-      randomBytes.slice(10, 16).map(b => b.toString(16).padStart(2, '0')).join('')
+      (timeHi | 0x1000).toString(16).padStart(4, '0'), // Version 1
+      ((randomBytes[0] & 0x3F) | 0x80).toString(16).padStart(2, '0'), // Variant
+      randomBytes.slice(1, 8).reduce((acc, byte) => acc + byte.toString(16).padStart(2, '0'), '')
     ].join('-')
   }
 
-  const generateUUIDv5 = (namespace: string, name: string) => {
-    // Simple v5 implementation (in practice, you'd use a proper SHA-1 hash)
-    const combined = namespace + name
-    let hash = 0
-    for (let i = 0; i < combined.length; i++) {
-      hash = ((hash << 5) - hash) + combined.charCodeAt(i)
-      hash = hash & hash
-    }
+  const generateUUIDv4 = (): string => {
+    // Generate a version 4 UUID (random)
+    const bytes = new Uint8Array(16)
+    crypto.getRandomValues(bytes)
     
-    const bytes = new Array(16)
-    for (let i = 0; i < 16; i++) {
-      bytes[i] = (hash >> (i * 8)) & 0xff
-    }
+    // Set version (4) and variant (10xx)
+    bytes[6] = (bytes[6] & 0x0F) | 0x40
+    bytes[8] = (bytes[8] & 0x3F) | 0x80
     
-    // Set version (5) and variant bits
-    bytes[6] = (bytes[6] & 0x0f) | 0x50
-    bytes[8] = (bytes[8] & 0x3f) | 0x80
-    
-    return [
-      bytes.slice(0, 4).map(b => b.toString(16).padStart(2, '0')).join(''),
-      bytes.slice(4, 6).map(b => b.toString(16).padStart(2, '0')).join(''),
-      bytes.slice(6, 8).map(b => b.toString(16).padStart(2, '0')).join(''),
-      bytes.slice(8, 10).map(b => b.toString(16).padStart(2, '0')).join(''),
-      bytes.slice(10, 16).map(b => b.toString(16).padStart(2, '0')).join('')
-    ].join('-')
-  }
-
-  const generateUUIDs = () => {
-    if (uuidCount < 1 || uuidCount > 100) {
-      toast({
-        title: "Error",
-        description: "Please enter a count between 1 and 100",
-        variant: "destructive"
+    return Array.from(bytes)
+      .map((byte, index) => {
+        if (index === 4 || index === 6 || index === 8 || index === 10) {
+          return '-' + byte.toString(16).padStart(2, '0')
+        }
+        return byte.toString(16).padStart(2, '0')
       })
-      return
-    }
-
-    const newUuids: string[] = []
-    
-    for (let i = 0; i < uuidCount; i++) {
-      switch (uuidVersion) {
-        case '1':
-          newUuids.push(generateUUIDv1())
-          break
-        case '4':
-          newUuids.push(generateUUIDv4())
-          break
-        case '5':
-          const namespace = customNamespace || 'default-namespace'
-          const name = `uuid-${i}-${Date.now()}`
-          newUuids.push(generateUUIDv5(namespace, name))
-          break
-        default:
-          newUuids.push(generateUUIDv4())
-      }
-    }
-    
-    setUuids(newUuids)
+      .join('')
   }
 
-  const copyToClipboard = (uuid: string) => {
-    navigator.clipboard.writeText(uuid)
-    toast({
-      title: "Copied!",
-      description: "UUID copied to clipboard"
-    })
+  const generateUUIDv5 = (namespace: string, name: string): string => {
+    // Generate a version 5 UUID (SHA-1 based)
+    // This is a simplified implementation
+    const encoder = new TextEncoder()
+    const data = encoder.encode(namespace + name)
+    
+    // Create SHA-1 hash (simplified)
+    let hash = 0
+    for (let i = 0; i < data.length; i++) {
+      hash = ((hash << 5) - hash) + data[i]
+      hash = hash & hash // Convert to 32-bit integer
+    }
+    
+    // Format as UUID v5
+    const bytes = new Uint8Array(16)
+    for (let i = 0; i < 16; i++) {
+      bytes[i] = (hash >> (i * 8)) & 0xFF
+    }
+    
+    // Set version (5) and variant (10xx)
+    bytes[6] = (bytes[6] & 0x0F) | 0x50
+    bytes[8] = (bytes[8] & 0x3F) | 0x80
+    
+    return Array.from(bytes)
+      .map((byte, index) => {
+        if (index === 4 || index === 6 || index === 8 || index === 10) {
+          return '-' + byte.toString(16).padStart(2, '0')
+        }
+        return byte.toString(16).padStart(2, '0')
+      })
+      .join('')
   }
 
-  const copyAllToClipboard = () => {
-    const allUuids = uuids.join('\n')
-    navigator.clipboard.writeText(allUuids)
-    toast({
-      title: "Copied!",
-      description: "All UUIDs copied to clipboard"
-    })
+  const copyToClipboard = () => {
+    if (output) {
+      navigator.clipboard.writeText(output)
+    }
+  }
+
+  const downloadResult = () => {
+    if (output) {
+      const blob = new Blob([output], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'uuids.txt'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }
   }
 
   const clearAll = () => {
-    setUuids([])
-  }
-
-  const removeUuid = (index: number) => {
-    setUuids(uuids.filter((_, i) => i !== index))
+    setOutput('')
+    setError(null)
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">UUID Generator</h1>
-        <p className="text-muted-foreground">Generate UUIDs (Universally Unique Identifiers)</p>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
+    <ToolLayout
+      toolId="uuid-generator"
+      toolName="UUID Generator"
+      toolDescription="Generate universally unique identifiers"
+      toolCategory="Developer Tools"
+      toolIcon={<Key className="w-8 h-8" />}
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Input Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Key className="h-5 w-5" />
-              Generator Settings
-            </CardTitle>
-            <CardDescription>Configure UUID generation options</CardDescription>
+            <CardTitle>Generator Settings</CardTitle>
+            <CardDescription>
+              Configure UUID generation options
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="uuid-version">UUID Version</Label>
+            <div className="space-y-2">
+              <Label>UUID Version</Label>
               <Select value={uuidVersion} onValueChange={setUuidVersion}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Version 1 (Time-based)</SelectItem>
-                  <SelectItem value="4">Version 4 (Random)</SelectItem>
-                  <SelectItem value="5">Version 5 (SHA-1 based)</SelectItem>
+                  <SelectItem value="v1">Version 1 (Timestamp-based)</SelectItem>
+                  <SelectItem value="v4">Version 4 (Random)</SelectItem>
+                  <SelectItem value="v5">Version 5 (SHA-1 based)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div>
-              <Label htmlFor="uuid-count">Number of UUIDs</Label>
+            <div className="space-y-2">
+              <Label>Quantity</Label>
               <Input
-                id="uuid-count"
                 type="number"
                 min="1"
                 max="100"
-                value={uuidCount}
-                onChange={(e) => setUuidCount(parseInt(e.target.value) || 1)}
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+                placeholder="Number of UUIDs to generate"
               />
             </div>
 
-            {uuidVersion === '5' && (
-              <div>
-                <Label htmlFor="custom-namespace">Namespace (Optional)</Label>
-                <Input
-                  id="custom-namespace"
-                  placeholder="Enter custom namespace..."
-                  value={customNamespace}
-                  onChange={(e) => setCustomNamespace(e.target.value)}
-                />
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-600">{error}</p>
               </div>
             )}
 
-            <Button onClick={generateUUIDs} className="w-full">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Generate UUIDs
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={clearAll}>
+                Clear
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
+        {/* Output Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Key className="h-5 w-5" />
-              UUID Information
-            </CardTitle>
-            <CardDescription>About UUID versions</CardDescription>
+            <CardTitle>Generated UUIDs</CardTitle>
+            <CardDescription>
+              Your generated UUIDs will appear here
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="p-3 border rounded-lg">
-                <h4 className="font-semibold text-sm mb-1">Version 1</h4>
-                <p className="text-xs text-muted-foreground">
-                  Time-based UUID generated from timestamp and MAC address
-                </p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Results</label>
+                {output && (
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={copyToClipboard}>
+                      <Copy className="w-4 h-4 mr-1" />
+                      Copy
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={downloadResult}>
+                      <Download className="w-4 h-4 mr-1" />
+                      Download
+                    </Button>
+                  </div>
+                )}
               </div>
-              
-              <div className="p-3 border rounded-lg">
-                <h4 className="font-semibold text-sm mb-1">Version 4</h4>
-                <p className="text-xs text-muted-foreground">
-                  Random UUID generated from random numbers
-                </p>
-              </div>
-              
-              <div className="p-3 border rounded-lg">
-                <h4 className="font-semibold text-sm mb-1">Version 5</h4>
-                <p className="text-xs text-muted-foreground">
-                  SHA-1 hash-based UUID from namespace and name
-                </p>
-              </div>
+              <Textarea
+                value={output}
+                readOnly
+                placeholder="Generated UUIDs will appear here..."
+                rows={8}
+                className="font-mono text-sm bg-muted/50"
+              />
             </div>
 
-            <div className="text-xs text-muted-foreground">
-              <p>UUID Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</p>
-              <p>Total possible UUIDs: 2^128 ≈ 3.4 × 10^38</p>
+            <div className="flex gap-2">
+              <Button 
+                onClick={generateUuid}
+                className="flex-1"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Generate {quantity} UUID{quantity > 1 ? 's' : ''}
+              </Button>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {uuids.length > 0 && (
-        <Card className="mt-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Generated UUIDs</CardTitle>
-                <CardDescription>{uuids.length} UUID(s) generated</CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={copyAllToClipboard} variant="outline" size="sm">
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy All
-                </Button>
-                <Button onClick={clearAll} variant="outline" size="sm">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Clear All
-                </Button>
-              </div>
+      {/* Information Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">About UUIDs</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <h4 className="font-medium mb-2">🆔 Version 1</h4>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• Timestamp-based</li>
+                <li>• Contains MAC address</li>
+                <li>• Sortable by time</li>
+                <li>• Privacy concerns</li>
+              </ul>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {uuids.map((uuid, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex-1 font-mono text-sm">
-                    {uuid}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      v{uuidVersion}
-                    </Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyToClipboard(uuid)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeUuid(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+            <div>
+              <h4 className="font-medium mb-2">🎲 Version 4</h4>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• Random numbers</li>
+                <li>• Most common type</li>
+                <li>• No identifiable info</li>
+                <li>• Good for general use</li>
+              </ul>
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+            <div>
+              <h4 className="font-medium mb-2">🔐 Version 5</h4>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• SHA-1 hash based</li>
+                <li>• Deterministic</li>
+                <li>• Same input = same UUID</li>
+                <li>• Good for naming</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </ToolLayout>
   )
 }

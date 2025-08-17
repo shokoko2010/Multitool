@@ -65,13 +65,14 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import toast from '@/lib/toast'
 
 interface Tool {
+  id: string
   name: string
-  href: string
   description: string
   category: string
-  icon: any
+  icon: string
+  path: string
   featured?: boolean
-  popular?: boolean
+  tags?: string[]
 }
 
 interface Category {
@@ -95,7 +96,6 @@ export default function ToolsPage() {
   
   // Filter states
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false)
-  const [showPopularOnly, setShowPopularOnly] = useState(false)
   const [sortBy, setSortBy] = useState<'name' | 'popularity' | 'featured'>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   
@@ -118,26 +118,98 @@ export default function ToolsPage() {
   const [newRating, setNewRating] = useState(5)
   const [newReview, setNewReview] = useState('')
 
+  // Icon mapping function
+  const getIconComponent = (iconName: string) => {
+    const iconMap: Record<string, any> = {
+      Search,
+      Grid,
+      Globe,
+      Shield,
+      Code,
+      Image,
+      Palette,
+      Calculator,
+      HashIcon,
+      Database,
+      FileText,
+      Zap,
+      GitCompare,
+      BarChart3,
+      Key,
+      Volume2,
+      Video,
+      Monitor,
+      Wifi,
+      HardDrive,
+      Cpu,
+      Dice6,
+      Calendar,
+      QrCode,
+      Upload,
+      Settings,
+      Binary,
+      FileCode,
+      Download,
+      CheckCircle,
+      Brain,
+      Star,
+      TrendingUp,
+      Users,
+      ZapIcon,
+      ArrowRight,
+      Sparkles,
+      Grid3X3,
+      LinkIcon,
+      AlertCircle,
+      RefreshCw,
+      Loader2,
+      X,
+      Bot,
+      Mail,
+      CreditCard,
+      DollarSign,
+      Type,
+      Hash,
+      Filter,
+      List
+    }
+    return iconMap[iconName] || Search
+  }
+
   useEffect(() => {
     const fetchTools = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch('/api/tools')
-        const data = await response.json()
+        const [toolsResponse, categoriesResponse] = await Promise.all([
+          fetch('/api/tools'),
+          fetch('/api/tools?categories=true')
+        ])
         
-        if (data.success) {
-          setTools(data.data)
-          setCategories(data.categories)
+        const toolsData = await toolsResponse.json()
+        const categoriesData = await categoriesResponse.json()
+        
+        if (toolsData.success && categoriesData.success) {
+          setTools(toolsData.data)
           
           // Add 'All Tools' category to the beginning
           const allToolsCategory = {
             id: 'all',
             name: 'All Tools',
-            count: data.total,
+            count: toolsData.data.length,
             icon: Grid3X3,
             description: 'Browse all available tools'
           }
-          setCategories(prev => [allToolsCategory, ...prev])
+          
+          // Convert categories string array to Category objects
+          const categoryObjects = categoriesData.data.map((categoryName: string) => ({
+            id: categoryName.toLowerCase().replace(/\s+/g, '-'),
+            name: categoryName,
+            count: toolsData.data.filter((tool: any) => tool.category === categoryName).length,
+            icon: Grid3X3, // Default icon, can be customized per category
+            description: `Browse ${categoryName.toLowerCase()} tools`
+          }))
+          
+          setCategories(prev => [allToolsCategory, ...categoryObjects])
         }
       } catch (error) {
         console.error('Failed to fetch tools:', error)
@@ -254,16 +326,13 @@ export default function ToolsPage() {
     if (searchQuery) {
       filtered = filtered.filter(tool =>
         tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tool.description.toLowerCase().includes(searchQuery.toLowerCase())
+        tool.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (tool.tags && tool.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
       )
     }
 
     if (showFeaturedOnly) {
       filtered = filtered.filter(tool => tool.featured)
-    }
-
-    if (showPopularOnly) {
-      filtered = filtered.filter(tool => tool.popular)
     }
 
     if (showFavoritesOnly) {
@@ -279,8 +348,8 @@ export default function ToolsPage() {
           comparison = a.name.localeCompare(b.name)
           break
         case 'popularity':
-          const aPopularity = (a.popular ? 1 : 0) - (a.featured ? 0.5 : 0)
-          const bPopularity = (b.popular ? 1 : 0) - (b.featured ? 0.5 : 0)
+          const aPopularity = (a.featured ? 1 : 0) + (getUsageCount(a.name) > 0 ? 0.5 : 0)
+          const bPopularity = (b.featured ? 1 : 0) + (getUsageCount(b.name) > 0 ? 0.5 : 0)
           comparison = aPopularity - bPopularity
           break
         case 'featured':
@@ -294,12 +363,12 @@ export default function ToolsPage() {
     })
 
     setFilteredTools(filtered)
-  }, [tools, selectedCategory, searchQuery, showFeaturedOnly, showPopularOnly, sortBy, sortOrder])
+  }, [tools, selectedCategory, searchQuery, showFeaturedOnly, sortBy, sortOrder, showFavoritesOnly, favorites])
 
   const handleToolClick = (tool: Tool) => {
     trackToolUsage(tool.name)
     toast.success(`Opening ${tool.name}...`)
-    window.location.href = tool.href
+    window.location.href = tool.path
   }
 
   const handleRefresh = async () => {
@@ -332,7 +401,6 @@ export default function ToolsPage() {
     setSearchQuery('')
     setSelectedCategory('all')
     setShowFeaturedOnly(false)
-    setShowPopularOnly(false)
     setShowFavoritesOnly(false)
     setSortBy('name')
     setSortOrder('asc')
@@ -372,7 +440,7 @@ export default function ToolsPage() {
     // Track activity
     const activity = {
       toolName,
-      toolHref: `/${tools.find(t => t.name === toolName)?.href || '#'}`,
+      toolHref: tools.find(t => t.name === toolName)?.path || '#',
       timestamp: new Date().toISOString(),
       success: true
     }
@@ -508,7 +576,7 @@ export default function ToolsPage() {
                 <Filter className="h-4 w-4 mr-2" />
                 Filters {showFilters && <span className="ml-1 text-xs">(Active)</span>}
               </Button>
-              {(searchQuery || selectedCategory !== 'all' || showFeaturedOnly || showPopularOnly || sortBy !== 'name' || showFavoritesOnly || selectedToolsForComparison.length > 0) && (
+              {(searchQuery || selectedCategory !== 'all' || showFeaturedOnly || sortBy !== 'name' || showFavoritesOnly || selectedToolsForComparison.length > 0) && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -635,15 +703,6 @@ export default function ToolsPage() {
                         className="rounded border-gray-300"
                       />
                       <span className="text-sm">Featured only</span>
-                    </label>
-                    <label className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={showPopularOnly}
-                        onChange={(e) => setShowPopularOnly(e.target.checked)}
-                        className="rounded border-gray-300"
-                      />
-                      <span className="text-sm">Popular only</span>
                     </label>
                     <label className="flex items-center space-x-2 cursor-pointer">
                       <input

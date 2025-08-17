@@ -810,7 +810,7 @@ export const tools: Tool[] = [
     name: 'Text Formatter',
     description: 'Format text with styles',
     category: 'Text Tools',
-    icon: 'Format',
+    icon: 'AlignLeft',
     path: '/tools/text-formatter',
     tags: ['text', 'format', 'style']
   },

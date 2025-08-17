@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Search, Bot, Mail, CreditCard, DollarSign, Type, Hash, Calculator, Palette, Image, Clock, Globe, Ruler, Weight, Thermometer, Gauge, Lock, File, Tag, Code, FileText, Braces, Fingerprint, Key, Dice1, Wifi, Server, Link, Percent, Calendar, FileSpreadsheet, FileJson, FileCode, Shield, Copy, RotateCcw, AlignLeft, Scissors, Unlock, Upload } from 'lucide-react'
+import { Search, Bot, Mail, CreditCard, DollarSign, Type, Hash, Calculator, Palette, Image, Clock, Globe, Ruler, Weight, Thermometer, Gauge, Lock, File, Tag, Code, FileText, Braces, Fingerprint, Key, Dice1, Wifi, Server, Link, Percent, Calendar, FileSpreadsheet, FileJson, FileCode, Shield, Copy, RotateCcw, AlignLeft, Scissors, Unlock, Upload, GitCompare, AtSign, BarChart, BarChart3, Binary, Camera, CheckCircle, Computer, Divide, ExternalLink, Eye, FlaskConical, Frown, GitBranch, Languages, ListOrdered, Merge, MessageCircle, Mic, Phone, PiggyBank, QrCode, Radio, RotateCw, Scan, ScanBarcode, Share, Smartphone, Smile, Square, Timer, Trash2, User, Volume2, Wrench, Youtube, Zap, ZapOff, Database } from 'lucide-react'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 
@@ -51,6 +51,45 @@ const iconMap = {
   Scissors,
   Unlock,
   Upload,
+  GitCompare,
+  AtSign,
+  BarChart,
+  BarChart3,
+  Binary,
+  Camera,
+  CheckCircle,
+  Computer,
+  Divide,
+  ExternalLink,
+  Eye,
+  FlaskConical,
+  Frown,
+  GitBranch,
+  Languages,
+  ListOrdered,
+  Merge,
+  MessageCircle,
+  Mic,
+  Phone,
+  PiggyBank,
+  QrCode,
+  Radio,
+  RotateCw,
+  Scan,
+  ScanBarcode,
+  Share,
+  Smartphone,
+  Smile,
+  Square,
+  Timer,
+  Trash2,
+  User,
+  Volume2,
+  Wrench,
+  Youtube,
+  Zap,
+  ZapOff,
+  Database,
   Tool: Search
 }
 
@@ -166,7 +205,7 @@ export default function Home() {
               Z.ai MultiTool
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mb-8">
-              A comprehensive collection of 299+ tools for developers, designers, and content creators
+              A comprehensive collection of 411+ tools for developers, designers, and content creators
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Badge variant="secondary" className="text-sm px-4 py-2">

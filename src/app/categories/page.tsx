@@ -169,7 +169,7 @@ export default function CategoriesPage() {
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4">Tool Categories</h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Explore our comprehensive collection of 299+ tools organized into 19 specialized categories
+              Explore our comprehensive collection of 411+ tools organized into 19 specialized categories
             </p>
           </div>
 

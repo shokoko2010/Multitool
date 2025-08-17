@@ -1,409 +1,376 @@
-"use client"
+'use client'
 
-import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { 
-  User, 
-  Mail, 
-  Calendar, 
-  Settings, 
-  BarChart3, 
-  Heart,
-  Clock,
-  Star,
-  Edit,
-  Save,
-  X,
-  Shield,
-  Bell,
-  Globe
-} from "lucide-react"
-import { useTheme } from "next-themes"
+import { useSession } from 'next-auth/react'
+import { useState, useEffect } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { User, Mail, Calendar, Shield, Activity, Settings } from 'lucide-react'
+import { Header } from '@/components/header'
+import { Footer } from '@/components/footer'
+import { UsageService } from '@/lib/auth/services'
+
+interface UserProfile {
+  id: string
+  email: string
+  name?: string
+  role: string
+  createdAt: string
+  subscription?: {
+    id: string
+    plan: {
+      name: string
+      description: string
+      price: number
+      features: string
+    }
+    status: string
+    startedAt: string
+    endsAt?: string
+  }
+  usage: Array<{
+    id: string
+    toolId: string
+    count: number
+    lastUsed: string
+  }>
+}
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
-  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<UserProfile | null>(null)
+  const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
-  const [userProfile, setUserProfile] = useState({
-    name: "",
-    email: "",
-    bio: "",
-    timezone: "UTC",
-    language: "en",
-    notifications: true,
-    darkMode: true,
+  const [formData, setFormData] = useState({
+    name: '',
+    email: ''
   })
 
   useEffect(() => {
-    if (session?.user) {
-      setUserProfile({
-        name: session.user.name || "",
-        email: session.user.email || "",
-        bio: "",
-        timezone: "UTC",
-        language: "en",
-        notifications: true,
-        darkMode: true,
+    if (status === 'loading') return
+
+    if (!session) {
+      window.location.href = '/auth/signin'
+      return
+    }
+
+    fetchUserProfile()
+  }, [session, status])
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await fetch('/api/user/profile')
+      if (response.ok) {
+        const data = await response.json()
+        setUser(data)
+        setFormData({
+          name: data.name || '',
+          email: data.email
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    try {
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       })
-      setIsLoading(false)
-    }
-  }, [session])
 
-  const handleSave = () => {
-    setIsEditing(false)
-    // In a real app, you would save to your backend
-    toast.success("Profile updated successfully")
-  }
-
-  const handleCancel = () => {
-    setIsEditing(false)
-    // Reset to original values
-    if (session?.user) {
-      setUserProfile(prev => ({
-        ...prev,
-        name: session.user?.name || "",
-        email: session.user?.email || "",
-      }))
+      if (response.ok) {
+        setUser(prev => prev ? { ...prev, ...formData } : null)
+        setIsEditing(false)
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error)
     }
   }
 
-  if (status === "loading" || isLoading) {
+  if (status === 'loading' || loading) {
     return (
-      <div className="container mx-auto p-6 max-w-4xl">
-        <div className="space-y-6">
-          <div className="h-8 bg-gray-200 animate-pulse rounded w-1/3"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-gray-200 animate-pulse rounded-lg"></div>
-            ))}
-          </div>
-        </div>
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </main>
+        <Footer />
       </div>
     )
   }
 
-  if (!session) {
-    return (
-      <div className="container mx-auto p-6 max-w-4xl">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-xl font-semibold mb-2">Please Sign In</h2>
-            <p className="text-muted-foreground mb-4">You need to be signed in to view your profile</p>
-            <Button onClick={() => window.location.href = "/auth/signin"}>
-              Sign In
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
+  if (!session || !user) {
+    return null
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Profile</h1>
-            <p className="text-muted-foreground">
-              Manage your account settings and preferences
-            </p>
-          </div>
-          {isEditing ? (
-            <div className="flex gap-2">
-              <Button onClick={handleSave}>
-                <Save className="w-4 h-4 mr-2" />
-                Save
-              </Button>
-              <Button variant="outline" onClick={handleCancel}>
-                <X className="w-4 h-4 mr-2" />
-                Cancel
-              </Button>
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header />
+      
+      <main className="flex-1">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            {/* Header */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold mb-2">Profile</h1>
+              <p className="text-muted-foreground">
+                Manage your account and view your activity
+              </p>
             </div>
-          ) : (
-            <Button onClick={() => setIsEditing(true)}>
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Profile
-            </Button>
-          )}
+
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="subscription">Subscription</TabsTrigger>
+                <TabsTrigger value="activity">Activity</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-6">
+                {/* Profile Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Profile Information</CardTitle>
+                    <CardDescription>
+                      Update your account details and personal information
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {isEditing ? (
+                      <form onSubmit={handleUpdateProfile} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Full Name</Label>
+                          <Input
+                            id="name"
+                            value={formData.name}
+                            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button type="submit">Save Changes</Button>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => setIsEditing(false)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-4">
+                          <Avatar className="w-16 h-16">
+                            <AvatarImage src="/avatar.jpg" />
+                            <AvatarFallback>
+                              {user.name?.charAt(0) || user.email.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h3 className="text-lg font-semibold">{user.name || 'No name set'}</h3>
+                            <p className="text-muted-foreground">{user.email}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-center space-x-2">
+                            <User className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm">{user.name || 'No name set'}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Mail className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm">{user.email}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm">
+                              Joined {new Date(user.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Shield className="w-4 h-4 text-muted-foreground" />
+                            <Badge variant={user.role === 'ADMIN' ? 'destructive' : 'secondary'}>
+                              {user.role}
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <Button onClick={() => setIsEditing(true)}>
+                          Edit Profile
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Tools Used</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{user.usage.length}</div>
+                      <p className="text-xs text-muted-foreground">
+                        Different tools accessed
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Total Usage</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {user.usage.reduce((sum, item) => sum + item.count, 0)}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Total tool interactions
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Member Since</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {new Date(user.createdAt).getFullYear()}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Account created
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="subscription" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Current Subscription</CardTitle>
+                    <CardDescription>
+                      Manage your subscription and billing information
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {user.subscription ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-lg font-semibold">{user.subscription.plan.name}</h3>
+                            <p className="text-muted-foreground">{user.subscription.plan.description}</p>
+                          </div>
+                          <Badge variant={user.subscription.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                            {user.subscription.status}
+                          </Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="font-medium">Price:</span> ${user.subscription.plan.price}/month
+                          </div>
+                          <div>
+                            <span className="font-medium">Started:</span> {new Date(user.subscription.startedAt).toLocaleDateString()}
+                          </div>
+                          {user.subscription.endsAt && (
+                            <div>
+                              <span className="font-medium">Ends:</span> {new Date(user.subscription.endsAt).toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <Button asChild>
+                            <a href="/subscription">Manage Subscription</a>
+                          </Button>
+                          <Button variant="outline" asChild>
+                            <a href="/subscription">Change Plan</a>
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Settings className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">No Active Subscription</h3>
+                        <p className="text-muted-foreground mb-4">
+                          Subscribe to a plan to access premium features and tools
+                        </p>
+                        <Button asChild>
+                          <a href="/subscription">View Plans</a>
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="activity" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Activity</CardTitle>
+                    <CardDescription>
+                      Your recent tool usage and activity history
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {user.usage.length > 0 ? (
+                      <div className="space-y-3">
+                        {user.usage.slice(0, 10).map((usage) => (
+                          <div key={usage.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <Activity className="w-4 h-4 text-muted-foreground" />
+                              <div>
+                                <p className="font-medium">Tool ID: {usage.toolId}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Last used: {new Date(usage.lastUsed).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <Badge variant="outline">
+                              {usage.count} uses
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Activity className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">No activity yet</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
-      </div>
-
-      <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="profile" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>
-                Update your personal details and profile information
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Avatar */}
-              <div className="flex items-center space-x-4">
-                <Avatar className="w-20 h-20">
-                  <AvatarImage src={session.user?.image || ""} />
-                  <AvatarFallback className="text-lg">
-                    {userProfile.name?.charAt(0).toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="text-lg font-semibold">{userProfile.name || "User"}</h3>
-                  <p className="text-muted-foreground">Member since {new Date().toLocaleDateString()}</p>
-                </div>
-              </div>
-
-              {/* Form Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  {isEditing ? (
-                    <Input
-                      id="name"
-                      value={userProfile.name}
-                      onChange={(e) => setUserProfile(prev => ({ ...prev, name: e.target.value }))}
-                    />
-                  ) : (
-                    <div className="p-3 bg-muted rounded-md">
-                      {userProfile.name || "Not set"}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  {isEditing ? (
-                    <Input
-                      id="email"
-                      type="email"
-                      value={userProfile.email}
-                      onChange={(e) => setUserProfile(prev => ({ ...prev, email: e.target.value }))}
-                    />
-                  ) : (
-                    <div className="p-3 bg-muted rounded-md flex items-center">
-                      <Mail className="w-4 h-4 mr-2 text-muted-foreground" />
-                      {userProfile.email}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  {isEditing ? (
-                    <textarea
-                      id="bio"
-                      className="w-full p-3 bg-muted rounded-md min-h-[100px] resize-none"
-                      placeholder="Tell us about yourself..."
-                      value={userProfile.bio}
-                      onChange={(e) => setUserProfile(prev => ({ ...prev, bio: e.target.value }))}
-                    />
-                  ) : (
-                    <div className="p-3 bg-muted rounded-md min-h-[100px]">
-                      {userProfile.bio || "No bio set"}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="activity" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>
-                Your recent actions and interactions on the platform
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Mock activity data */}
-                {[
-                  { action: "Used SEO Analyzer", time: "2 hours ago", icon: BarChart3 },
-                  { action: "Favorited Image Optimizer", time: "1 day ago", icon: Heart },
-                  { action: "Created account", time: "3 days ago", icon: User },
-                  { action: "Used Password Generator", time: "1 week ago", icon: Shield },
-                ].map((activity, index) => (
-                  <div key={index} className="flex items-center space-x-4 p-3 bg-muted rounded-lg">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <activity.icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium">{activity.action}</p>
-                      <p className="text-sm text-muted-foreground">{activity.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Preferences</CardTitle>
-              <CardDescription>
-                Customize your experience and preferences
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Dark Mode</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Enable dark theme for better viewing in low light
-                    </p>
-                  </div>
-                  <Button
-                    variant={userProfile.darkMode ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setUserProfile(prev => ({ ...prev, darkMode: !prev.darkMode }))}
-                  >
-                    {userProfile.darkMode ? "Enabled" : "Disabled"}
-                  </Button>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Email Notifications</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receive updates and notifications via email
-                    </p>
-                  </div>
-                  <Button
-                    variant={userProfile.notifications ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setUserProfile(prev => ({ ...prev, notifications: !prev.notifications }))}
-                  >
-                    {userProfile.notifications ? "Enabled" : "Disabled"}
-                  </Button>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="timezone">Timezone</Label>
-                  {isEditing ? (
-                    <select
-                      id="timezone"
-                      className="w-full p-3 bg-muted rounded-md"
-                      value={userProfile.timezone}
-                      onChange={(e) => setUserProfile(prev => ({ ...prev, timezone: e.target.value }))}
-                    >
-                      <option value="UTC">UTC</option>
-                      <option value="EST">Eastern Time</option>
-                      <option value="PST">Pacific Time</option>
-                      <option value="CET">Central European Time</option>
-                    </select>
-                  ) : (
-                    <div className="p-3 bg-muted rounded-md">
-                      {userProfile.timezone}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="language">Language</Label>
-                  {isEditing ? (
-                    <select
-                      id="language"
-                      className="w-full p-3 bg-muted rounded-md"
-                      value={userProfile.language}
-                      onChange={(e) => setUserProfile(prev => ({ ...prev, language: e.target.value }))}
-                    >
-                      <option value="en">English</option>
-                      <option value="es">Spanish</option>
-                      <option value="fr">French</option>
-                      <option value="de">German</option>
-                    </select>
-                  ) : (
-                    <div className="p-3 bg-muted rounded-md flex items-center">
-                      <Globe className="w-4 h-4 mr-2 text-muted-foreground" />
-                      {userProfile.language.toUpperCase()}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="security" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security</CardTitle>
-              <CardDescription>
-                Manage your account security and authentication
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label>Password</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Last changed 3 months ago
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    Change Password
-                  </Button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label>Two-Factor Authentication</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Add an extra layer of security to your account
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    Enable 2FA
-                  </Button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label>Active Sessions</Label>
-                    <p className="text-sm text-muted-foreground">
-                      2 devices currently active
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    View Sessions
-                  </Button>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <Button variant="destructive" className="w-full">
-                    Delete Account
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2 text-center">
-                    This action cannot be undone. All your data will be permanently removed.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      </main>
+      
+      <Footer />
     </div>
   )
 }

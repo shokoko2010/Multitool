@@ -1,106 +1,150 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ToolLayout } from '@/components/tools/ToolLayout'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
-import { Copy, Hash } from 'lucide-react'
-import { toast } from '@/hooks/use-toast'
+import { Copy, Download, Fingerprint, RotateCcw } from 'lucide-react'
+import { useToolAccess } from '@/hooks/useToolAccess'
 
 export default function HashGenerator() {
-  const [inputText, setInputText] = useState('')
+  const [input, setInput] = useState('')
+  const [output, setOutput] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const [hashType, setHashType] = useState('md5')
-  const [hashResult, setHashResult] = useState('')
-
-  const hashFunctions = {
-    md5: async (text: string) => {
-      const encoder = new TextEncoder()
-      const data = encoder.encode(text)
-      const hashBuffer = await crypto.subtle.digest('MD5', data)
-      const hashArray = Array.from(new Uint8Array(hashBuffer))
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-    },
-    sha1: async (text: string) => {
-      const encoder = new TextEncoder()
-      const data = encoder.encode(text)
-      const hashBuffer = await crypto.subtle.digest('SHA-1', data)
-      const hashArray = Array.from(new Uint8Array(hashBuffer))
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-    },
-    sha256: async (text: string) => {
-      const encoder = new TextEncoder()
-      const data = encoder.encode(text)
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-      const hashArray = Array.from(new Uint8Array(hashBuffer))
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-    },
-    sha384: async (text: string) => {
-      const encoder = new TextEncoder()
-      const data = encoder.encode(text)
-      const hashBuffer = await crypto.subtle.digest('SHA-384', data)
-      const hashArray = Array.from(new Uint8Array(hashBuffer))
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-    },
-    sha512: async (text: string) => {
-      const encoder = new TextEncoder()
-      const data = encoder.encode(text)
-      const hashBuffer = await crypto.subtle.digest('SHA-512', data)
-      const hashArray = Array.from(new Uint8Array(hashBuffer))
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-    }
-  }
+  
+  const { trackUsage } = useToolAccess('hash-generator')
 
   const generateHash = async () => {
-    if (!inputText.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter text to hash",
-        variant: "destructive"
-      })
+    if (!input.trim()) {
+      setError('Please enter text to hash')
       return
     }
 
     try {
-      const hash = await hashFunctions[hashType as keyof typeof hashFunctions](inputText)
-      setHashResult(hash)
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to generate hash",
-        variant: "destructive"
-      })
+      // Track usage before generating hash
+      await trackUsage()
+
+      let hash = ''
+      const encoder = new TextEncoder()
+      const data = encoder.encode(input)
+
+      switch (hashType) {
+        case 'md5':
+          hash = await generateMD5(data)
+          break
+        case 'sha1':
+          hash = await generateSHA1(data)
+          break
+        case 'sha256':
+          hash = await generateSHA256(data)
+          break
+        case 'sha512':
+          hash = await generateSHA512(data)
+          break
+        default:
+          throw new Error('Unsupported hash type')
+      }
+
+      setOutput(hash)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Hash generation failed')
+      setOutput('')
     }
   }
 
+  const generateMD5 = async (data: Uint8Array): Promise<string> => {
+    // Simple MD5 implementation for demonstration
+    // In production, you'd use a proper crypto library
+    const hashBuffer = await crypto.subtle.digest('MD5', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  }
+
+  const generateSHA1 = async (data: Uint8Array): Promise<string> => {
+    const hashBuffer = await crypto.subtle.digest('SHA-1', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  }
+
+  const generateSHA256 = async (data: Uint8Array): Promise<string> => {
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  }
+
+  const generateSHA512 = async (data: Uint8Array): Promise<string> => {
+    const hashBuffer = await crypto.subtle.digest('SHA-512', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  }
+
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(hashResult)
-    toast({
-      title: "Copied!",
-      description: "Hash copied to clipboard"
-    })
+    if (output) {
+      navigator.clipboard.writeText(output)
+    }
+  }
+
+  const downloadResult = () => {
+    if (output) {
+      const blob = new Blob([output], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${hashType}-hash.txt`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }
+  }
+
+  const clearAll = () => {
+    setInput('')
+    setOutput('')
+    setError(null)
+  }
+
+  const loadSample = () => {
+    setInput('Hello, World!')
+    setError(null)
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Hash Generator</h1>
-        <p className="text-muted-foreground">Generate various hash types from your text input</p>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
+    <ToolLayout
+      toolId="hash-generator"
+      toolName="Hash Generator"
+      toolDescription="Generate cryptographic hashes from text"
+      toolCategory="Security Tools"
+      toolIcon={<Fingerprint className="w-8 h-8" />}
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Input Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Hash className="h-5 w-5" />
-              Input
-            </CardTitle>
-            <CardDescription>Enter the text you want to hash</CardDescription>
+            <CardTitle>Input</CardTitle>
+            <CardDescription>
+              Enter text to generate hash
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="hash-type">Hash Type</Label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Text to Hash</label>
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Enter text to generate hash..."
+                rows={8}
+                className="font-mono text-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Hash Type</label>
               <Select value={hashType} onValueChange={setHashType}>
                 <SelectTrigger>
                   <SelectValue />
@@ -109,68 +153,103 @@ export default function HashGenerator() {
                   <SelectItem value="md5">MD5</SelectItem>
                   <SelectItem value="sha1">SHA-1</SelectItem>
                   <SelectItem value="sha256">SHA-256</SelectItem>
-                  <SelectItem value="sha384">SHA-384</SelectItem>
                   <SelectItem value="sha512">SHA-512</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="input-text">Text to Hash</Label>
-              <Textarea
-                id="input-text"
-                placeholder="Enter text to hash..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                className="min-h-[150px]"
-              />
+
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={loadSample}>
+                Load Sample
+              </Button>
+              <Button variant="outline" size="sm" onClick={clearAll}>
+                Clear
+              </Button>
             </div>
-            <Button onClick={generateHash} className="w-full">
-              Generate Hash
-            </Button>
           </CardContent>
         </Card>
 
+        {/* Output Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Hash className="h-5 w-5" />
-              Result
-            </CardTitle>
-            <CardDescription>Generated hash result</CardDescription>
+            <CardTitle>Output</CardTitle>
+            <CardDescription>
+              {hashType.toUpperCase()} hash result
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="hash-result">{hashType.toUpperCase()} Hash</Label>
-              <div className="relative">
-                <Textarea
-                  id="hash-result"
-                  value={hashResult}
-                  readOnly
-                  className="min-h-[150px] font-mono text-sm"
-                  placeholder="Hash result will appear here..."
-                />
-                {hashResult && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={copyToClipboard}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Hash Result</label>
+                {output && (
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={copyToClipboard}>
+                      <Copy className="w-4 h-4 mr-1" />
+                      Copy
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={downloadResult}>
+                      <Download className="w-4 h-4 mr-1" />
+                      Download
+                    </Button>
+                  </div>
                 )}
               </div>
+              <Textarea
+                value={output}
+                readOnly
+                placeholder={`${hashType.toUpperCase()} hash will appear here...`}
+                rows={8}
+                className="font-mono text-sm bg-muted/50 break-all"
+              />
             </div>
-            {hashResult && (
-              <div className="text-sm text-muted-foreground">
-                <p>Hash Type: {hashType.toUpperCase()}</p>
-                <p>Input Length: {inputText.length} characters</p>
-                <p>Hash Length: {hashResult.length} characters</p>
-              </div>
-            )}
+
+            <div className="flex gap-2">
+              <Button 
+                onClick={generateHash}
+                disabled={!input.trim()}
+                className="flex-1"
+              >
+                Generate {hashType.toUpperCase()} Hash
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
-    </div>
+
+      {/* Information Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">About Cryptographic Hashes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <h4 className="font-medium mb-2">🔐 What are Hashes?</h4>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• One-way cryptographic functions</li>
+                <li>• Fixed-size output from variable input</li>
+                <li>• Deterministic (same input = same output)</li>
+                <li>• Small input change = completely different output</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium mb-2">🛡️ Security Notes</h4>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• MD5/SHA-1 are considered weak for security</li>
+                <li>• Use SHA-256 or SHA-512 for better security</li>
+                <li>• Hashes are not encryption (cannot be reversed)</li>
+                <li>• Use for password hashing, data integrity</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </ToolLayout>
   )
 }

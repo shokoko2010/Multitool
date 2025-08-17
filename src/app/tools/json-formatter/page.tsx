@@ -1,330 +1,416 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ToolLayout } from '@/components/tools/ToolLayout'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Input } from '@/components/ui/input'
-import { Copy, Braces, FileText, Upload, Download } from 'lucide-react'
-import { toast } from '@/hooks/use-toast'
+import { Loader2, Copy, Download, FileText, Braces, CheckCircle, AlertCircle } from 'lucide-react'
+import { useToolAccess } from '@/hooks/useToolAccess'
 
-export default function JsonFormatter() {
-  const [inputText, setInputText] = useState('')
-  const [formattedJson, setFormattedJson] = useState('')
-  const [indentSize, setIndentSize] = useState(2)
-  const [sortKeys, setSortKeys] = useState(false)
-  const [error, setError] = useState('')
+interface FormatOptions {
+  indentSize: number
+  indentType: 'spaces' | 'tabs'
+  sortKeys: boolean
+  removeQuotes: boolean
+}
 
-  const formatJson = () => {
-    if (!inputText.trim()) {
-      setError('Please enter JSON to format')
+export default function JSONFormatter() {
+  const [input, setInput] = useState('')
+  const [output, setOutput] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isValid, setIsValid] = useState<boolean | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [options, setOptions] = useState<FormatOptions>({
+    indentSize: 2,
+    indentType: 'spaces',
+    sortKeys: false,
+    removeQuotes: false
+  })
+
+  const { trackUsage } = useToolAccess('json-formatter')
+
+  const formatJSON = async () => {
+    if (!input.trim()) {
+      setError('Please enter JSON data')
       return
     }
 
+    setLoading(true)
+    setError(null)
+
     try {
-      const parsed = JSON.parse(inputText)
+      // Track usage before formatting
+      await trackUsage()
+
+      // Parse and format JSON
+      const parsed = JSON.parse(input)
       
-      if (sortKeys && typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-        const sortedObj = sortObjectKeys(parsed)
-        const formatted = JSON.stringify(sortedObj, null, indentSize)
-        setFormattedJson(formatted)
-      } else {
-        const formatted = JSON.stringify(parsed, null, indentSize)
-        setFormattedJson(formatted)
+      let formatted = JSON.stringify(parsed, null, options.indentType === 'spaces' ? options.indentSize : '\t')
+      
+      // Apply additional options
+      if (options.sortKeys && typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+        const sorted = {}
+        Object.keys(parsed).sort().forEach(key => {
+          sorted[key] = parsed[key]
+        })
+        formatted = JSON.stringify(sorted, null, options.indentType === 'spaces' ? options.indentSize : '\t')
       }
-      
-      setError('')
+
+      if (options.removeQuotes) {
+        // This is a simplified version - in practice, removing quotes is complex
+        // and might break JSON validity, so we'll keep it simple
+        formatted = formatted.replace(/"([^"]+)":/g, '$1:')
+      }
+
+      setOutput(formatted)
+      setIsValid(true)
     } catch (err) {
-      setError(`Invalid JSON: ${err instanceof Error ? err.message : 'Unknown error'}`)
-      setFormattedJson('')
+      setError(err instanceof Error ? err.message : 'Invalid JSON')
+      setOutput('')
+      setIsValid(false)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const sortObjectKeys = (obj: any): any => {
-    if (typeof obj !== 'object' || obj === null) {
-      return obj
-    }
-
-    if (Array.isArray(obj)) {
-      return obj.map(sortObjectKeys)
-    }
-
-    const sorted: any = {}
-    Object.keys(obj).sort().forEach(key => {
-      sorted[key] = sortObjectKeys(obj[key])
-    })
-    return sorted
-  }
-
-  const minifyJson = () => {
-    if (!inputText.trim()) {
-      setError('Please enter JSON to minify')
+  const minifyJSON = async () => {
+    if (!input.trim()) {
+      setError('Please enter JSON data')
       return
     }
 
+    setLoading(true)
+    setError(null)
+
     try {
-      const parsed = JSON.parse(inputText)
+      // Track usage before minifying
+      await trackUsage()
+
+      const parsed = JSON.parse(input)
       const minified = JSON.stringify(parsed)
-      setFormattedJson(minified)
-      setError('')
+      
+      setOutput(minified)
+      setIsValid(true)
     } catch (err) {
-      setError(`Invalid JSON: ${err instanceof Error ? err.message : 'Unknown error'}`)
-      setFormattedJson('')
+      setError(err instanceof Error ? err.message : 'Invalid JSON')
+      setOutput('')
+      setIsValid(false)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const validateJson = () => {
-    if (!inputText.trim()) {
-      setError('Please enter JSON to validate')
+  const validateJSON = () => {
+    if (!input.trim()) {
+      setError('Please enter JSON data')
+      setIsValid(null)
       return
     }
 
     try {
-      JSON.parse(inputText)
-      toast({
-        title: "Valid JSON!",
-        description: "The JSON is valid and properly formatted"
-      })
-      setError('')
+      JSON.parse(input)
+      setIsValid(true)
+      setError(null)
     } catch (err) {
-      setError(`Invalid JSON: ${err instanceof Error ? err.message : 'Unknown error'}`)
-      setFormattedJson('')
+      setIsValid(false)
+      setError(err instanceof Error ? err.message : 'Invalid JSON')
     }
   }
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(formattedJson)
-    toast({
-      title: "Copied!",
-      description: "Formatted JSON copied to clipboard"
-    })
-  }
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const content = e.target?.result as string
-      setInputText(content)
+    if (output) {
+      navigator.clipboard.writeText(output)
     }
-    reader.readAsText(file)
   }
 
-  const downloadResult = () => {
-    if (!formattedJson) return
-    
-    const blob = new Blob([formattedJson], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'formatted.json'
-    a.click()
-    URL.revokeObjectURL(url)
+  const downloadJSON = () => {
+    if (output) {
+      const blob = new Blob([output], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'formatted.json'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }
   }
 
   const clearAll = () => {
-    setInputText('')
-    setFormattedJson('')
-    setError('')
+    setInput('')
+    setOutput('')
+    setError(null)
+    setIsValid(null)
   }
 
-  const sampleJson = `{
-  "name": "John Doe",
-  "age": 30,
-  "email": "john@example.com",
-  "address": {
-    "street": "123 Main St",
-    "city": "New York",
-    "country": "USA"
-  },
-  "hobbies": ["reading", "swimming", "coding"],
-  "isActive": true
-}`
-
   const loadSample = () => {
-    setInputText(sampleJson)
+    const sample = {
+      "name": "John Doe",
+      "age": 30,
+      "email": "john.doe@example.com",
+      "address": {
+        "street": "123 Main St",
+        "city": "Anytown",
+        "state": "CA",
+        "zip": "12345"
+      },
+      "hobbies": ["reading", "swimming", "coding"],
+      "active": true,
+      "metadata": {
+        "created": "2024-01-01T00:00:00Z",
+        "updated": "2024-01-02T00:00:00Z"
+      }
+    }
+    setInput(JSON.stringify(sample, null, 2))
+    setError(null)
+    setIsValid(true)
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">JSON Formatter</h1>
-        <p className="text-muted-foreground">Format, validate, and minify JSON data</p>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
+    <ToolLayout
+      toolId="json-formatter"
+      toolName="JSON Formatter"
+      toolDescription="Format, validate, and minify JSON data with ease"
+      toolCategory="Developer Tools"
+      toolIcon={<Braces className="w-8 h-8" />}
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Input Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Input JSON
-            </CardTitle>
-            <CardDescription>Enter or paste your JSON data</CardDescription>
+            <CardTitle>Input JSON</CardTitle>
+            <CardDescription>
+              Enter your JSON data to format or validate
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Button onClick={loadSample} variant="outline" size="sm">
-                Load Sample
-              </Button>
-              <Label htmlFor="file-upload" className="flex-1">
-                <Button variant="outline" size="sm" className="w-full" asChild>
-                  <span>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload File
-                  </span>
-                </Button>
-              </Label>
-              <Input
-                id="file-upload"
-                type="file"
-                accept=".json"
-                onChange={handleFileUpload}
-                className="hidden"
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">JSON Data</label>
+                <div className="flex items-center gap-2">
+                  {isValid === true && (
+                    <Badge variant="outline" className="text-green-600 border-green-200">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Valid
+                    </Badge>
+                  )}
+                  {isValid === false && (
+                    <Badge variant="outline" className="text-red-600 border-red-200">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      Invalid
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Enter your JSON data here..."
+                rows={12}
+                className="font-mono text-sm"
               />
-            </div>
-
-            <Textarea
-              placeholder="Enter your JSON data here..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              className="min-h-[300px] font-mono text-sm"
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="indent-size">Indent Size</Label>
-                <Select value={indentSize.toString()} onValueChange={(value) => setIndentSize(parseInt(value))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2">2 spaces</SelectItem>
-                    <SelectItem value="4">4 spaces</SelectItem>
-                    <SelectItem value="8">8 spaces</SelectItem>
-                    <SelectItem value="tab">Tab</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="sort-keys"
-                  checked={sortKeys}
-                  onCheckedChange={setSortKeys}
-                />
-                <Label htmlFor="sort-keys">Sort Keys</Label>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button onClick={formatJson} className="flex-1">
-                <Braces className="h-4 w-4 mr-2" />
-                Format
-              </Button>
-              <Button onClick={minifyJson} variant="outline">
-                Minify
-              </Button>
-              <Button onClick={validateJson} variant="outline">
-                Validate
-              </Button>
             </div>
 
             {error && (
-              <div className="p-3 bg-destructive/10 border border-destructive rounded-md">
-                <p className="text-sm text-destructive">{error}</p>
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-600">{error}</p>
               </div>
             )}
+
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={loadSample}>
+                Load Sample
+              </Button>
+              <Button variant="outline" size="sm" onClick={validateJSON}>
+                Validate
+              </Button>
+              <Button variant="outline" size="sm" onClick={clearAll}>
+                Clear
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
+        {/* Output Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Braces className="h-5 w-5" />
-              Formatted JSON
-            </CardTitle>
-            <CardDescription>Formatted and validated JSON output</CardDescription>
+            <CardTitle>Formatted JSON</CardTitle>
+            <CardDescription>
+              Your formatted JSON will appear here
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="relative">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Result</label>
+                {output && (
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={copyToClipboard}>
+                      <Copy className="w-4 h-4 mr-1" />
+                      Copy
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={downloadJSON}>
+                      <Download className="w-4 h-4 mr-1" />
+                      Download
+                    </Button>
+                  </div>
+                )}
+              </div>
               <Textarea
-                value={formattedJson}
+                value={output}
                 readOnly
-                className="min-h-[300px] font-mono text-sm"
                 placeholder="Formatted JSON will appear here..."
+                rows={12}
+                className="font-mono text-sm bg-muted/50"
               />
-              {formattedJson && (
-                <div className="absolute top-2 right-2 flex gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={copyToClipboard}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={downloadResult}
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
             </div>
 
-            {formattedJson && (
-              <div className="text-sm text-muted-foreground">
-                <p>Original Size: {inputText.length} characters</p>
-                <p>Formatted Size: {formattedJson.length} characters</p>
-                <p>Lines: {formattedJson.split('\n').length}</p>
-              </div>
-            )}
+            <div className="flex gap-2">
+              <Button 
+                onClick={formatJSON}
+                disabled={loading || !input.trim()}
+                className="flex-1"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Formatting...
+                  </>
+                ) : (
+                  'Format JSON'
+                )}
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={minifyJSON}
+                disabled={loading || !input.trim()}
+              >
+                Minify
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="mt-6">
+      {/* Format Options */}
+      <Card>
         <CardHeader>
-          <CardTitle>JSON Features</CardTitle>
-          <CardDescription>What this tool can do</CardDescription>
+          <CardTitle>Format Options</CardTitle>
+          <CardDescription>
+            Customize how your JSON is formatted
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div className="p-3 border rounded-lg">
-              <h4 className="font-semibold mb-2">Format JSON</h4>
-              <p className="text-muted-foreground">
-                Beautify JSON with proper indentation and line breaks for better readability.
-              </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Indent Size</label>
+              <Select 
+                value={options.indentSize.toString()} 
+                onValueChange={(value) => setOptions(prev => ({ ...prev, indentSize: parseInt(value) }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2">2 spaces</SelectItem>
+                  <SelectItem value="4">4 spaces</SelectItem>
+                  <SelectItem value="8">8 spaces</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            
-            <div className="p-3 border rounded-lg">
-              <h4 className="font-semibold mb-2">Validate JSON</h4>
-              <p className="text-muted-foreground">
-                Check if your JSON is valid and get detailed error messages for issues.
-              </p>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Indent Type</label>
+              <Select 
+                value={options.indentType} 
+                onValueChange={(value: 'spaces' | 'tabs') => setOptions(prev => ({ ...prev, indentType: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="spaces">Spaces</SelectItem>
+                  <SelectItem value="tabs">Tabs</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            
-            <div className="p-3 border rounded-lg">
-              <h4 className="font-semibold mb-2">Minify JSON</h4>
-              <p className="text-muted-foreground">
-                Remove unnecessary whitespace to reduce file size for production use.
-              </p>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Sort Keys</label>
+              <Select 
+                value={options.sortKeys.toString()} 
+                onValueChange={(value) => setOptions(prev => ({ ...prev, sortKeys: value === 'true' }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="false">Keep Order</SelectItem>
+                  <SelectItem value="true">Alphabetical</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Quote Style</label>
+              <Select 
+                value={options.removeQuotes.toString()} 
+                onValueChange={(value) => setOptions(prev => ({ ...prev, removeQuotes: value === 'true' }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="false">With Quotes</SelectItem>
+                  <SelectItem value="true">Without Quotes</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="flex gap-2 mt-6">
-        <Button onClick={clearAll} variant="outline" className="flex-1">
-          Clear All
-        </Button>
-      </div>
-    </div>
+      {/* JSON Tips */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">JSON Tips</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <h4 className="font-medium mb-2">📝 Syntax</h4>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• Use double quotes for keys</li>
+                <li>• Separate items with commas</li>
+                <li>• Use brackets for arrays</li>
+                <li>• Use braces for objects</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium mb-2">🔧 Best Practices</h4>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• Validate before using</li>
+                <li>• Use consistent formatting</li>
+                <li>• Keep it readable</li>
+                <li>• Remove unnecessary data</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium mb-2">⚡ Features</h4>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• Real-time validation</li>
+                <li>• Custom formatting</li>
+                <li>• Error highlighting</li>
+                <li>• Export options</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </ToolLayout>
   )
 }

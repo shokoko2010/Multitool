@@ -19,7 +19,7 @@ export function Footer() {
               <span className="font-bold text-xl">Z.ai MultiTool</span>
             </div>
             <p className="text-muted-foreground mb-4 max-w-md">
-              A comprehensive collection of 299+ tools for developers, designers, and content creators. 
+              A comprehensive collection of 411+ tools for developers, designers, and content creators. 
               Powered by AI and built with modern web technologies.
             </p>
             <div className="flex space-x-4">

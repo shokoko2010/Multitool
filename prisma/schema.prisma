@@ -13,12 +13,111 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum PlanStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+enum ToolAccessType {
+  UNLIMITED
+  LIMITED
+  BLOCKED
+}
+
 model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  role          UserRole @default(USER)
+  passwordHash  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Subscription related
+  subscriptions Subscription[]
+  usage         Usage[]
+  activityEvents ActivityEvent[]
+  
+  @@map("users")
+}
+
+model Plan {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  price       Float      @default(0)
+  status      PlanStatus @default(ACTIVE)
+  maxTools    Int        @default(0) // -1 for unlimited
+  maxUsage    Int        @default(0) // -1 for unlimited
+  features    String     // JSON string of features
+  priority    Int        @default(0) // Higher number = higher priority
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  // Relations
+  subscriptions Subscription[]
+  planTools    PlanTool[]
+  
+  @@map("plans")
+}
+
+model Subscription {
+  id          String     @id @default(cuid())
+  userId      String
+  planId      String
+  status      PlanStatus @default(ACTIVE)
+  startedAt   DateTime   @default(now())
+  endsAt      DateTime?
+  cancelledAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, planId])
+  @@map("subscriptions")
+}
+
+model PlanTool {
+  id         String         @id @default(cuid())
+  planId     String
+  toolId     String
+  accessType ToolAccessType @default(UNLIMITED)
+  maxUsage   Int            @default(-1) // -1 for unlimited
+  features   String         // JSON string of tool-specific features
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  
+  // Relations
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  
+  @@unique([planId, toolId])
+  @@map("plan_tools")
+}
+
+model Usage {
   id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
+  userId    String
+  toolId    String
+  count     Int      @default(0)
+  lastUsed  DateTime @default(now())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, toolId])
+  @@map("usage")
 }
 
 model Post {
@@ -29,4 +128,20 @@ model Post {
   authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+model ActivityEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  eventType   String   // 'tool_usage', 'page_view', 'search', 'login', 'signup', 'subscription_change'
+  eventData   String   // JSON string of event data
+  userAgent   String?
+  ipAddress   String?
+  sessionId   String?
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("activity_events")
 }
