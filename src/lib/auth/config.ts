@@ -82,4 +82,4 @@ const config = {
   }
 }
 
-export const handlers = NextAuth(config)
+export const handlers = NextAuth(config)// Trigger restart
