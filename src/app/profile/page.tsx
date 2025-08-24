@@ -9,10 +9,30 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { User, Mail, Calendar, Shield, Activity, Settings } from 'lucide-react'
+import { User, Mail, Calendar, Shield, Activity, Settings, Palette, Globe, Bell, Star, Heart } from 'lucide-react'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { UsageService } from '@/lib/auth/services'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import { tools } from '@/data/tools'
+
+interface UserPreferences {
+  theme: 'light' | 'dark' | 'system'
+  language: string
+  timezone: string
+  notifications: boolean
+  newsletter: boolean
+  preferredCategories: string[]
+  favoriteTools: string[]
+  recentTools: string[]
+}
+
+interface ToolRecommendation {
+  tool: any
+  score: number
+  reason: string
+}
 
 interface UserProfile {
   id: string
@@ -132,8 +152,10 @@ export default function ProfilePage() {
             </div>
 
             <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="preferences">Preferences</TabsTrigger>
+                <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
                 <TabsTrigger value="subscription">Subscription</TabsTrigger>
                 <TabsTrigger value="activity">Activity</TabsTrigger>
               </TabsList>
@@ -268,6 +290,34 @@ export default function ProfilePage() {
                 </div>
               </TabsContent>
 
+              <TabsContent value="preferences" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>User Preferences</CardTitle>
+                    <CardDescription>
+                      Customize your experience and settings
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <PreferencesTab />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="recommendations" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Personalized Recommendations</CardTitle>
+                    <CardDescription>
+                      Tools recommended based on your usage and preferences
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <RecommendationsTab />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="subscription" className="space-y-6">
                 <Card>
                   <CardHeader>
@@ -371,6 +421,373 @@ export default function ProfilePage() {
       </main>
       
       <Footer />
+    </div>
+  )
+}
+
+function PreferencesTab() {
+  const [preferences, setPreferences] = useState<UserPreferences | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const { data: session } = useSession()
+
+  useEffect(() => {
+    if (session) {
+      fetchPreferences()
+    }
+  }, [session])
+
+  const fetchPreferences = async () => {
+    try {
+      const response = await fetch('/api/user/preferences')
+      if (response.ok) {
+        const data = await response.json()
+        setPreferences(data)
+      }
+    } catch (error) {
+      console.error('Error fetching preferences:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const updatePreferences = async (updates: Partial<UserPreferences>) => {
+    if (!preferences) return
+
+    try {
+      setSaving(true)
+      const response = await fetch('/api/user/preferences', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      })
+
+      if (response.ok) {
+        const updated = await response.json()
+        setPreferences(updated)
+      }
+    } catch (error) {
+      console.error('Error updating preferences:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const toggleFavorite = async (toolId: string) => {
+    if (!preferences) return
+
+    try {
+      const isFavorite = preferences.favoriteTools.includes(toolId)
+      const response = await fetch('/api/user/favorites', {
+        method: isFavorite ? 'DELETE' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ toolId }),
+        ...(isFavorite && {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }),
+      })
+
+      if (response.ok) {
+        const updatedFavorites = await response.json()
+        setPreferences(prev => prev ? { ...prev, favoriteTools: updatedFavorites } : null)
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error)
+    }
+  }
+
+  const toggleCategory = async (category: string) => {
+    if (!preferences) return
+
+    const isSelected = preferences.preferredCategories.includes(category)
+    const updatedCategories = isSelected
+      ? preferences.preferredCategories.filter(c => c !== category)
+      : [...preferences.preferredCategories, category]
+
+    await updatePreferences({ preferredCategories: updatedCategories })
+  }
+
+  if (loading) {
+    return <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+  }
+
+  if (!preferences) {
+    return <div className="text-center text-muted-foreground">Failed to load preferences</div>
+  }
+
+  const allCategories = [...new Set(tools.map(tool => tool.category))]
+
+  return (
+    <div className="space-y-6">
+      {/* Appearance Settings */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Palette className="w-5 h-5" />
+          Appearance
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label>Theme</Label>
+            <Select
+              value={preferences.theme}
+              onValueChange={(value: 'light' | 'dark' | 'system') => 
+                updatePreferences({ theme: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">Light</SelectItem>
+                <SelectItem value="dark">Dark</SelectItem>
+                <SelectItem value="system">System</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Language</Label>
+            <Select
+              value={preferences.language}
+              onValueChange={(value) => updatePreferences({ language: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="es">Spanish</SelectItem>
+                <SelectItem value="fr">French</SelectItem>
+                <SelectItem value="de">German</SelectItem>
+                <SelectItem value="zh">Chinese</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Timezone</Label>
+            <Select
+              value={preferences.timezone}
+              onValueChange={(value) => updatePreferences({ timezone: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="UTC">UTC</SelectItem>
+                <SelectItem value="America/New_York">Eastern Time</SelectItem>
+                <SelectItem value="America/Chicago">Central Time</SelectItem>
+                <SelectItem value="America/Denver">Mountain Time</SelectItem>
+                <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* Notification Settings */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Bell className="w-5 h-5" />
+          Notifications
+        </h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Push Notifications</Label>
+              <p className="text-sm text-muted-foreground">
+                Receive notifications about your account and tools
+              </p>
+            </div>
+            <Switch
+              checked={preferences.notifications}
+              onCheckedChange={(checked) => updatePreferences({ notifications: checked })}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Newsletter</Label>
+              <p className="text-sm text-muted-foreground">
+                Receive updates about new tools and features
+              </p>
+            </div>
+            <Switch
+              checked={preferences.newsletter}
+              onCheckedChange={(checked) => updatePreferences({ newsletter: checked })}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Preferred Categories */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Star className="w-5 h-5" />
+          Preferred Categories
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          {allCategories.map(category => (
+            <Badge
+              key={category}
+              variant={preferences.preferredCategories.includes(category) ? 'default' : 'outline'}
+              className="cursor-pointer"
+              onClick={() => toggleCategory(category)}
+            >
+              {category}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      {/* Favorite Tools */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Heart className="w-5 h-5" />
+          Favorite Tools
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {tools.slice(0, 10).map(tool => (
+            <div
+              key={tool.id}
+              className="flex items-center justify-between p-3 border rounded-lg"
+            >
+              <div>
+                <h4 className="font-medium">{tool.name}</h4>
+                <p className="text-sm text-muted-foreground">{tool.category}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => toggleFavorite(tool.id)}
+              >
+                <Heart
+                  className={`w-4 h-4 ${
+                    preferences.favoriteTools.includes(tool.id)
+                      ? 'fill-red-500 text-red-500'
+                      : 'text-muted-foreground'
+                  }`}
+                />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function RecommendationsTab() {
+  const [recommendations, setRecommendations] = useState<ToolRecommendation[]>([])
+  const [trending, setTrending] = useState<ToolRecommendation[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchRecommendations()
+  }, [])
+
+  const fetchRecommendations = async () => {
+    try {
+      const [personalizedRes, trendingRes] = await Promise.all([
+        fetch('/api/user/recommendations?type=personalized'),
+        fetch('/api/user/recommendations?type=trending')
+      ])
+
+      if (personalizedRes.ok) {
+        const personalizedData = await personalizedRes.json()
+        setRecommendations(personalizedData)
+      }
+
+      if (trendingRes.ok) {
+        const trendingData = await trendingRes.json()
+        setTrending(trendingData)
+      }
+    } catch (error) {
+      console.error('Error fetching recommendations:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Personalized Recommendations */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Recommended For You</h3>
+        {recommendations.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {recommendations.map((rec, index) => (
+              <Card key={index} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">{rec.tool.name}</CardTitle>
+                  <CardDescription>{rec.tool.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline">{rec.tool.category}</Badge>
+                    <div className="text-sm text-muted-foreground">
+                      Score: {Math.round(rec.score)}
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {rec.reason}
+                  </p>
+                  <Button className="w-full mt-3" asChild>
+                    <a href={rec.tool.path}>Try Tool</a>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            No personalized recommendations available. Use more tools to get better recommendations!
+          </div>
+        )}
+      </div>
+
+      {/* Trending Tools */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Trending Tools</h3>
+        {trending.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {trending.slice(0, 6).map((rec, index) => (
+              <Card key={index} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">{rec.tool.name}</CardTitle>
+                  <CardDescription className="text-sm">
+                    {rec.tool.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline" className="text-xs">
+                      {rec.tool.category}
+                    </Badge>
+                    <div className="text-xs text-muted-foreground">
+                      Score: {Math.round(rec.score)}
+                    </div>
+                  </div>
+                  <Button className="w-full mt-3" size="sm" asChild>
+                    <a href={rec.tool.path}>Try Tool</a>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            No trending tools available at the moment.
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -1,12 +1,11 @@
 import { NextAuthOptions } from "next-auth"
-import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import { db } from "./db"
 import bcrypt from "bcryptjs"
+import { UserRole } from "./auth/types"
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(db),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -29,17 +28,21 @@ export const authOptions: NextAuthOptions = {
           }
         })
 
-        if (!user) {
+        if (!user || !user.password) {
           return null
         }
 
-        // For now, we'll just check if user exists since we don't have passwords yet
-        // In a real app, you'd check the hashed password here
+        // Verify password
+        const isValid = await bcrypt.compare(credentials.password, user.password)
+        if (!isValid) {
+          return null
+        }
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
-          image: user.image,
+          role: user.role
         }
       }
     })
@@ -51,12 +54,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id
+        token.role = user.role
       }
       return token
     },
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.sub as string
+        session.user.role = token.role as UserRole
       }
       return session
     }
@@ -64,5 +69,26 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/auth/signin",
     signUp: "/auth/signup"
+  }
+}
+
+export const auth = {
+  ...authOptions,
+  signIn: async (credentials: any) => {
+    // This is a simplified version - in real implementation you'd use NextAuth's signIn
+    const user = await db.user.findUnique({
+      where: { email: credentials.email }
+    })
+    
+    if (!user || !user.password) {
+      throw new Error('Invalid credentials')
+    }
+    
+    const isValid = await bcrypt.compare(credentials.password, user.password)
+    if (!isValid) {
+      throw new Error('Invalid credentials')
+    }
+    
+    return user
   }
 }

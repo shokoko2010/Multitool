@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Eye, Palette, Upload, Download from 'lucide-react'
+import { Eye, Palette, Upload, Download } from 'lucide-react'
 import { useToolAccess } from '@/hooks/useToolAccess'
 
 export default function ColorBlindnessSimulator() {
@@ -20,13 +20,13 @@ export default function ColorBlindnessSimulator() {
 
   const colorBlindnessTypes = [
     { id: 'normal', name: 'Normal Vision', description: 'No color blindness' },
-    { id: 'protanopia', name: 'Protanopia', description: 'Red-blind'missing red cones)' },
+    { id: 'protanopia', name: 'Protanopia', description: 'Red-blind (missing red cones)' },
     { id: 'protanomaly', name: 'Protanomaly', description: 'Red-weak (abnormal red cones)' },
     { id: 'deuteranopia', name: 'Deuteranopia', description: 'Green-blind (missing green cones)' },
     { id: 'deuteranomaly', name: 'Deuteranomaly', description: 'Green-weak (abnormal green cones)' },
     { id: 'tritanopia', name: 'Tritanopia', description: 'Blue-blind (missing blue cones)' },
     { id: 'tritanomaly', name: 'Tritanomaly', description: 'Blue-weak (abnormal blue cones)' },
-    { id: 'achromatopsia', name:' 'Achromatopsia', description: 'Complete color blindness' },
+    { id: 'achromatopsia', name: 'Achromatopsia', description: 'Complete color blindness' },
     { id: 'achromatomaly', name: 'Achromatomaly', description: 'Partial color blindness' }
   ]
 
@@ -34,8 +34,8 @@ export default function ColorBlindnessSimulator() {
     // Track usage when simulation is performed
     trackUsage()
 
-    Convert hex to RGB
- const const hex = color.replace('#', '')
+    // Convert hex to RGB
+    const hex = color.replace('#', '')
     const r = parseInt(hex.substr(0, 2), 16) / 255
     const g = parseInt(hex.substr(2, 2), 16) / 255
     const b = parseInt(hex.substr(4, 2), 16) / 255
@@ -46,7 +46,7 @@ export default function ColorBlindnessSimulator() {
  switch (type) {
    case 'protanopia':
      // Red-blind simulation
-     newR = r0.567 * r + 0.433 * g
+     newR = 0.567 * r + 0.433 * g
      newG = 0.558 * r + 0.442 * g
      newB = 0.242 * g + 0.758 * b
      break

@@ -1,0 +1,22 @@
+
+> dev
+> next dev
+
+ ⚠ Port 3000 is in use by process 2407
+2414, using available port 3005 instead.
+   ▲ Next.js 15.4.6
+   - Local:        http://localhost:3005
+   - Network:      http://21.0.1.72:3005
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 2.2s
+ ○ Compiling / ...
+ ✓ Compiled / in 7.7s (1737 modules)
+ ✓ Compiled in 885ms (800 modules)
+ ✓ Compiled in 401ms (800 modules)
+ ✓ Compiled in 281ms (800 modules)
+ ✓ Compiled in 319ms (800 modules)
+ ✓ Compiled in 239ms (800 modules)
+ ✓ Compiled in 280ms (800 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename '/home/z/my-project/.next/cache/webpack/client-development/0.pack.gz_' -> '/home/z/my-project/.next/cache/webpack/client-development/0.pack.gz'

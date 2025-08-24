@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Test</title>
+</head>
+<body>
+    <h1>Testing Icon Mapping</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Simulate the icon mapping issue
+        console.log('Testing if icons are available...');
+        
+        // Check if we can access the dev server
+        fetch('http://localhost:3002')
+            .then(response => response.text())
+            .then(html => {
+                console.log('Page loaded successfully');
+                document.getElementById('result').innerHTML = 'Page loaded successfully';
+                
+                // Check for specific content
+                if (html.includes('Z.ai MultiTool')) {
+                    console.log('Found Z.ai MultiTool title');
+                    document.getElementById('result').innerHTML += '<br>Found title: Z.ai MultiTool';
+                }
+                
+                if (html.includes('411')) {
+                    console.log('Found tools count');
+                    document.getElementById('result').innerHTML += '<br>Found tools count: 411';
+                }
+                
+                if (html.includes('Featured Tools')) {
+                    console.log('Found Featured Tools section');
+                    document.getElementById('result').innerHTML += '<br>Found Featured Tools section';
+                }
+                
+                // Check for error indicators
+                if (html.includes('error') || html.includes('Error') || html.includes('undefined')) {
+                    console.log('Found potential error in page');
+                    document.getElementById('result').innerHTML += '<br>Potential error found in page';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading page:', error);
+                document.getElementById('result').innerHTML = 'Error loading page: ' + error.message;
+            });
+    </script>
+</body>
+</html>

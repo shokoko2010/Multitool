@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth/config'
+import { auth } from '@/lib/auth'
 
 interface DateCalculationRequest {
   operation: 'add' | 'subtract' | 'difference' | 'weekday' | 'days_between'

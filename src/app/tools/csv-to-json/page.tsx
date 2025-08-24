@@ -217,7 +217,7 @@ Charlie Wilson,32,Phoenix,Analyst`
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='"">Double Quote (")</SelectItem>
+                    <SelectItem value='"'>Double Quote (")</SelectItem>
                     <SelectItem value="'">Single Quote (')</SelectItem>
                   </SelectContent>
                 </Select>

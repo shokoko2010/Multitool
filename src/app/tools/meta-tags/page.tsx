@@ -12,6 +12,7 @@ import { Globe, Search, RefreshCw, Copy, ExternalLink, AlertTriangle, CheckCircl
 import { useToast } from '@/hooks/use-toast'
 
 export default function MetaTagsChecker() {
+  const { toast } = useToast()
   const [url, setUrl] = useState('')
   const [isChecking, setIsChecking] = useState(false)
   const [metaData, setMetaData] = useState<{

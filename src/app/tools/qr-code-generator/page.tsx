@@ -5,375 +5,658 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Download, Copy, QrCode, Settings, Palette, Image, Download as DownloadIcon } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { Textarea } from '@/components/ui/textarea'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { 
+  Loader2, 
+  QrCode, 
+  Download, 
+  Copy, 
+  Settings, 
+  Smartphone,
+  Wifi,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Palette
+} from 'lucide-react'
 
-interface QRCodeConfig {
+interface QRCodeOptions {
   size: number
-  format: 'png' | 'svg' | 'jpg'
   bgColor: string
   fgColor: string
-  errorCorrection: 'L' | 'M' | 'Q' | 'H'
+  errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H'
+  includeMargin: boolean
+  format: 'png' | 'svg' | 'jpg'
 }
 
-export default function QRCodeGeneratorTool() {
-  const [inputText, setInputText] = useState('')
-  const [qrConfig, setQrConfig] = useState<QRCodeConfig>({
-    size: 256,
-    format: 'png',
-    bgColor: '#ffffff',
-    fgColor: '#000000',
-    errorCorrection: 'M'
-  })
-  const [generatedQR, setGeneratedQR] = useState<string | null>(null)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const { toast } = useToast()
+interface QRCodeData {
+  text: string
+  url: string
+  email: string
+  phone: string
+  wifi: {
+    ssid: string
+    password: string
+    security: 'WPA' | 'WEP' | 'nopass'
+    hidden: boolean
+  }
+  location: {
+    latitude: number
+    longitude: number
+    query: string
+  }
+  event: {
+    title: string
+    start: string
+    end: string
+    location: string
+    description: string
+  }
+}
 
-  const generateQRCode = async () => {
-    if (!inputText.trim()) {
-      toast({
-        title: "Invalid Input",
-        description: "Please enter text or URL to generate QR code",
-        variant: "destructive",
-      })
-      return
+export default function QRCodeGenerator() {
+  const [activeTab, setActiveTab] = useState('text')
+  const [qrData, setQrData] = useState<QRCodeData>({
+    text: '',
+    url: '',
+    email: '',
+    phone: '',
+    wifi: {
+      ssid: '',
+      password: '',
+      security: 'WPA',
+      hidden: false
+    },
+    location: {
+      latitude: 0,
+      longitude: 0,
+      query: ''
+    },
+    event: {
+      title: '',
+      start: '',
+      end: '',
+      location: '',
+      description: ''
     }
+  })
+  const [options, setOptions] = useState<QRCodeOptions>({
+    size: 200,
+    bgColor: '#FFFFFF',
+    fgColor: '#000000',
+    errorCorrectionLevel: 'M',
+    includeMargin: true,
+    format: 'png'
+  })
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
+  const generateQRCode = async (data: string) => {
     setIsGenerating(true)
-    
-    // Simulate QR code generation
-    setTimeout(() => {
-      // Create a simple SVG-based QR code simulation
-      const svgContent = createSimulatedQRCode()
-      setGeneratedQR(svgContent)
-      setIsGenerating(false)
-      
-      toast({
-        title: "QR Code Generated",
-        description: "Your QR code has been successfully generated",
+    setError(null)
+
+    try {
+      // For demo purposes, we'll use a placeholder QR code service
+      // In a real implementation, you would use a QR code library like qrcode.js
+      const qrParams = new URLSearchParams({
+        data: data,
+        size: options.size.toString(),
+        bgcolor: options.bgColor.replace('#', ''),
+        color: options.fgColor.replace('#', ''),
+        qzone: options.includeMargin ? '1' : '0',
+        format: options.format
       })
-    }, 1000)
+
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?${qrParams.toString()}`
+      setQrCodeUrl(qrUrl)
+    } catch (error) {
+      setError('Failed to generate QR code. Please try again.')
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
-  const createSimulatedQRCode = (): string => {
-    const { size, bgColor, fgColor } = qrConfig
-    
-    // Create a simple SVG pattern that looks like a QR code
-    const moduleSize = 8
-    const modules = Math.floor(size / moduleSize)
-    const pattern = []
-    
-    // Create finder pattern (top-left)
-    for (let i = 0; i < 7; i++) {
-      for (let j = 0; j < 7; j++) {
-        pattern.push(`<rect x="${j * moduleSize}" y="${i * moduleSize}" width="${moduleSize}" height="${moduleSize}" fill="${i === 0 || j === 0 || i === 6 || j === 6 ? fgColor : bgColor}"/>`)
-      }
-    }
-    
-    // Create finder pattern (top-right)
-    for (let i = 0; i < 7; i++) {
-      for (let j = modules - 7; j < modules; j++) {
-        pattern.push(`<rect x="${j * moduleSize}" y="${i * moduleSize}" width="${moduleSize}" height="${moduleSize}" fill="${i === 0 || j === modules - 7 || i === 6 || j === modules - 1 ? fgColor : bgColor}"/>`)
-      }
-    }
-    
-    // Create finder pattern (bottom-left)
-    for (let i = modules - 7; i < modules; i++) {
-      for (let j = 0; j < 7; j++) {
-        pattern.push(`<rect x="${j * moduleSize}" y="${i * moduleSize}" width="${moduleSize}" height="${moduleSize}" fill="${i === modules - 7 || j === 0 || i === modules - 1 || j === 6 ? fgColor : bgColor}"/>`)
-      }
-    }
-    
-    // Add some random data modules
-    for (let i = 8; i < modules - 8; i++) {
-      for (let j = 8; j < modules - 8; j++) {
-        if (Math.random() > 0.5) {
-          pattern.push(`<rect x="${j * moduleSize}" y="${i * moduleSize}" width="${moduleSize}" height="${moduleSize}" fill="${fgColor}"/>`)
+  const getQRData = (): string => {
+    switch (activeTab) {
+      case 'text':
+        return qrData.text
+      case 'url':
+        return qrData.url
+      case 'email':
+        return `mailto:${qrData.email}`
+      case 'phone':
+        return `tel:${qrData.phone}`
+      case 'wifi':
+        const wifi = qrData.wifi
+        return `WIFI:T:${wifi.security};S:${wifi.ssid};P:${wifi.password};H:${wifi.hidden ? 'true' : 'false'};;`
+      case 'location':
+        if (qrData.location.latitude && qrData.location.longitude) {
+          return `geo:${qrData.location.latitude},${qrData.location.longitude}`
         }
-      }
+        return qrData.location.query
+      case 'event':
+        const event = qrData.event
+        const startDate = new Date(event.start).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+        const endDate = new Date(event.end).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+        return `BEGIN:VEVENT
+SUMMARY:${event.title}
+DTSTART:${startDate}
+DTEND:${endDate}
+LOCATION:${event.location}
+DESCRIPTION:${event.description}
+END:VEVENT`
+      default:
+        return ''
     }
-    
-    return `
-      <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-        <rect width="${size}" height="${size}" fill="${bgColor}"/>
-        ${pattern.join('')}
-      </svg>
-    `
+  }
+
+  const handleGenerate = () => {
+    const data = getQRData()
+    if (!data.trim()) {
+      setError('Please enter the required information')
+      return
+    }
+    generateQRCode(data)
   }
 
   const downloadQRCode = () => {
-    if (!generatedQR) return
-    
-    const blob = new Blob([generatedQR], { type: 'image/svg+xml' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `qr-code-${Date.now()}.${qrConfig.format}`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    
-    toast({
-      title: "Download Started",
-      description: "Your QR code download has begun",
-    })
+    if (!qrCodeUrl) return
+
+    const link = document.createElement('a')
+    link.href = qrCodeUrl
+    link.download = `qrcode_${activeTab}_${new Date().toISOString().split('T')[0]}.${options.format}`
+    link.click()
   }
 
-  const copyToClipboard = () => {
-    if (!generatedQR) return
-    
-    navigator.clipboard.writeText(generatedQR)
-    toast({
-      title: "Copied!",
-      description: "QR code SVG copied to clipboard",
-    })
+  const copyQRCode = async () => {
+    if (!qrCodeUrl) return
+
+    try {
+      const response = await fetch(qrCodeUrl)
+      const blob = await response.blob()
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob })
+      ])
+    } catch (error) {
+      console.error('Failed to copy QR code to clipboard:', error)
+    }
   }
 
-  const loadSampleData = () => {
-    setInputText('https://www.example.com')
-    setQrConfig({
-      size: 256,
-      format: 'png',
-      bgColor: '#ffffff',
-      fgColor: '#000000',
-      errorCorrection: 'M'
-    })
+  const updateQrData = (field: string, value: any) => {
+    setQrData(prev => ({
+      ...prev,
+      [field]: value
+    }))
   }
 
-  const presetColors = [
-    { bg: '#ffffff', fg: '#000000', name: 'Black & White' },
-    { bg: '#000000', fg: '#ffffff', name: 'White & Black' },
-    { bg: '#1e40af', fg: '#ffffff', name: 'Blue & White' },
-    { bg: '#dc2626', fg: '#ffffff', name: 'Red & White' },
-    { bg: '#16a34a', fg: '#ffffff', name: 'Green & White' },
-    { bg: '#7c3aed', fg: '#ffffff', name: 'Purple & White' }
-  ]
+  const updateWifiData = (field: string, value: any) => {
+    setQrData(prev => ({
+      ...prev,
+      wifi: {
+        ...prev.wifi,
+        [field]: value
+      }
+    }))
+  }
+
+  const updateLocationData = (field: string, value: any) => {
+    setQrData(prev => ({
+      ...prev,
+      location: {
+        ...prev.location,
+        [field]: value
+      }
+    }))
+  }
+
+  const updateEventData = (field: string, value: any) => {
+    setQrData(prev => ({
+      ...prev,
+      event: {
+        ...prev.event,
+        [field]: value
+      }
+    }))
+  }
+
+  const getTabIcon = (tab: string) => {
+    switch (tab) {
+      case 'text': return <QrCode className="h-4 w-4" />
+      case 'url': return <QrCode className="h-4 w-4" />
+      case 'email': return <Mail className="h-4 w-4" />
+      case 'phone': return <Phone className="h-4 w-4" />
+      case 'wifi': return <Wifi className="h-4 w-4" />
+      case 'location': return <MapPin className="h-4 w-4" />
+      case 'event': return <Calendar className="h-4 w-4" />
+      default: return <QrCode className="h-4 w-4" />
+    }
+  }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold">QR Code Generator</h1>
-        <p className="text-muted-foreground">
-          Generate custom QR codes for URLs, text, and more
-        </p>
-      </div>
+    <div className="container mx-auto p-4 max-w-6xl">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <QrCode className="h-6 w-6" />
+            QR Code Generator
+          </CardTitle>
+          <CardDescription>
+            Generate QR codes for text, URLs, contacts, WiFi, locations, and events
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Input Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <QrCode className="h-5 w-5" />
-              QR Code Configuration
-            </CardTitle>
-            <CardDescription>
-              Configure your QR code settings and content
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Text Input */}
-            <div className="space-y-2">
-              <Label htmlFor="qr-text">Content</Label>
-              <Textarea
-                id="qr-text"
-                placeholder="Enter URL, text, or other content..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                className="min-h-[100px]"
-              />
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7">
+                  <TabsTrigger value="text" className="text-xs">
+                    {getTabIcon('text')}
+                    <span className="hidden sm:inline ml-1">Text</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="url" className="text-xs">
+                    {getTabIcon('url')}
+                    <span className="hidden sm:inline ml-1">URL</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="email" className="text-xs">
+                    {getTabIcon('email')}
+                    <span className="hidden sm:inline ml-1">Email</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="phone" className="text-xs">
+                    {getTabIcon('phone')}
+                    <span className="hidden sm:inline ml-1">Phone</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="wifi" className="text-xs">
+                    {getTabIcon('wifi')}
+                    <span className="hidden sm:inline ml-1">WiFi</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="location" className="text-xs">
+                    {getTabIcon('location')}
+                    <span className="hidden sm:inline ml-1">Location</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="event" className="text-xs">
+                    {getTabIcon('event')}
+                    <span className="hidden sm:inline ml-1">Event</span>
+                  </TabsTrigger>
+                </TabsList>
 
-            {/* Size Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="qr-size">Size: {qrConfig.size}px</Label>
-              <Input
-                id="qr-size"
-                type="range"
-                min="128"
-                max="512"
-                step="32"
-                value={qrConfig.size}
-                onChange={(e) => setQrConfig(prev => ({ ...prev, size: parseInt(e.target.value) }))}
-              />
-            </div>
-
-            {/* Format Selection */}
-            <div className="space-y-2">
-              <Label>Format</Label>
-              <Select value={qrConfig.format} onValueChange={(value: 'png' | 'svg' | 'jpg') => setQrConfig(prev => ({ ...prev, format: value }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="png">PNG</SelectItem>
-                  <SelectItem value="svg">SVG</SelectItem>
-                  <SelectItem value="jpg">JPG</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Color Selection */}
-            <div className="space-y-3">
-              <Label>Colors</Label>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm">Background</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="color"
-                      value={qrConfig.bgColor}
-                      onChange={(e) => setQrConfig(prev => ({ ...prev, bgColor: e.target.value }))}
-                      className="w-12 h-10 p-1"
-                    />
-                    <Input
-                      value={qrConfig.bgColor}
-                      onChange={(e) => setQrConfig(prev => ({ ...prev, bgColor: e.target.value }))}
-                      className="flex-1 text-xs"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm">Foreground</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="color"
-                      value={qrConfig.fgColor}
-                      onChange={(e) => setQrConfig(prev => ({ ...prev, fgColor: e.target.value }))}
-                      className="w-12 h-10 p-1"
-                    />
-                    <Input
-                      value={qrConfig.fgColor}
-                      onChange={(e) => setQrConfig(prev => ({ ...prev, fgColor: e.target.value }))}
-                      className="flex-1 text-xs"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Preset Colors */}
-            <div className="space-y-2">
-              <Label>Color Presets</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {presetColors.map((preset, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setQrConfig(prev => ({ ...prev, bgColor: preset.bg, fgColor: preset.fg }))}
-                    className="h-8 text-xs"
-                  >
-                    <div className="flex items-center gap-1">
-                      <div 
-                        className="w-3 h-3 rounded border" 
-                        style={{ backgroundColor: preset.bg }}
+                <div className="mt-4 space-y-4">
+                  <TabsContent value="text" className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="text">Text Content</Label>
+                      <Textarea
+                        id="text"
+                        placeholder="Enter any text to encode in the QR code"
+                        value={qrData.text}
+                        onChange={(e) => updateQrData('text', e.target.value)}
+                        rows={4}
                       />
-                      <div 
-                        className="w-3 h-3 rounded border" 
-                        style={{ backgroundColor: preset.fg }}
-                      />
-                      <span>{preset.name.split(' & ')[0]}</span>
                     </div>
-                  </Button>
-                ))}
-              </div>
-            </div>
+                  </TabsContent>
 
-            {/* Error Correction */}
-            <div className="space-y-2">
-              <Label>Error Correction Level</Label>
-              <Select value={qrConfig.errorCorrection} onValueChange={(value: 'L' | 'M' | 'Q' | 'H') => setQrConfig(prev => ({ ...prev, errorCorrection: value }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="L">Low (~7%)</SelectItem>
-                  <SelectItem value="M">Medium (~15%)</SelectItem>
-                  <SelectItem value="Q">Quartile (~25%)</SelectItem>
-                  <SelectItem value="H">High (~30%)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                  <TabsContent value="url" className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="url">URL</Label>
+                      <Input
+                        id="url"
+                        placeholder="https://example.com"
+                        value={qrData.url}
+                        onChange={(e) => updateQrData('url', e.target.value)}
+                      />
+                    </div>
+                  </TabsContent>
 
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              <Button onClick={generateQRCode} disabled={isGenerating} className="flex-1">
-                {isGenerating ? 'Generating...' : 'Generate QR Code'}
-              </Button>
-              <Button onClick={loadSampleData} variant="outline">
-                Load Sample
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                  <TabsContent value="email" className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email Address</Label>
+                      <Input
+                        id="email"
+                        placeholder="example@email.com"
+                        value={qrData.email}
+                        onChange={(e) => updateQrData('email', e.target.value)}
+                      />
+                    </div>
+                  </TabsContent>
 
-        {/* Output Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <Image className="h-5 w-5" alt="Generated QR code" />
-                Generated QR Code
-              </span>
-              {generatedQR && (
-                <div className="flex gap-2">
-                  <Button onClick={copyToClipboard} variant="outline" size="sm">
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Button onClick={downloadQRCode} variant="outline" size="sm">
-                    <DownloadIcon className="h-4 w-4" />
-                  </Button>
+                  <TabsContent value="phone" className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input
+                        id="phone"
+                        placeholder="+1234567890"
+                        value={qrData.phone}
+                        onChange={(e) => updateQrData('phone', e.target.value)}
+                      />
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="wifi" className="space-y-4">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="ssid">Network Name (SSID)</Label>
+                        <Input
+                          id="ssid"
+                          placeholder="MyWiFiNetwork"
+                          value={qrData.wifi.ssid}
+                          onChange={(e) => updateWifiData('ssid', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="password">Password</Label>
+                        <Input
+                          id="password"
+                          type="password"
+                          placeholder="password123"
+                          value={qrData.wifi.password}
+                          onChange={(e) => updateWifiData('password', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Security Type</Label>
+                        <select
+                          value={qrData.wifi.security}
+                          onChange={(e) => updateWifiData('security', e.target.value)}
+                          className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                        >
+                          <option value="WPA">WPA/WPA2</option>
+                          <option value="WEP">WEP</option>
+                          <option value="nopass">No Password</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="hidden"
+                          checked={qrData.wifi.hidden}
+                          onChange={(e) => updateWifiData('hidden', e.target.checked)}
+                        />
+                        <Label htmlFor="hidden">Hidden Network</Label>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="location" className="space-y-4">
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="latitude">Latitude</Label>
+                          <Input
+                            id="latitude"
+                            type="number"
+                            step="any"
+                            placeholder="37.7749"
+                            value={qrData.location.latitude || ''}
+                            onChange={(e) => updateLocationData('latitude', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="longitude">Longitude</Label>
+                          <Input
+                            id="longitude"
+                            type="number"
+                            step="any"
+                            placeholder="-122.4194"
+                            value={qrData.location.longitude || ''}
+                            onChange={(e) => updateLocationData('longitude', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="locationQuery">Or Search Query</Label>
+                        <Input
+                          id="locationQuery"
+                          placeholder="Times Square, New York"
+                          value={qrData.location.query}
+                          onChange={(e) => updateLocationData('query', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="event" className="space-y-4">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="eventTitle">Event Title</Label>
+                        <Input
+                          id="eventTitle"
+                          placeholder="Team Meeting"
+                          value={qrData.event.title}
+                          onChange={(e) => updateEventData('title', e.target.value)}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="eventStart">Start Date & Time</Label>
+                          <Input
+                            id="eventStart"
+                            type="datetime-local"
+                            value={qrData.event.start}
+                            onChange={(e) => updateEventData('start', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="eventEnd">End Date & Time</Label>
+                          <Input
+                            id="eventEnd"
+                            type="datetime-local"
+                            value={qrData.event.end}
+                            onChange={(e) => updateEventData('end', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="eventLocation">Location</Label>
+                        <Input
+                          id="eventLocation"
+                          placeholder="Conference Room A"
+                          value={qrData.event.location}
+                          onChange={(e) => updateEventData('location', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="eventDescription">Description</Label>
+                        <Textarea
+                          id="eventDescription"
+                          placeholder="Weekly team sync meeting"
+                          value={qrData.event.description}
+                          onChange={(e) => updateEventData('description', e.target.value)}
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  </TabsContent>
                 </div>
-              )}
-            </CardTitle>
-            <CardDescription>
-              Your generated QR code will appear here
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {generatedQR ? (
-              <div className="flex flex-col items-center space-y-4">
-                <div 
-                  className="border rounded-lg p-4 bg-white"
-                  style={{ 
-                    width: qrConfig.size + 32, 
-                    height: qrConfig.size + 32,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: generatedQR }}
-                    style={{ width: qrConfig.size, height: qrConfig.size }}
-                  />
-                </div>
-                
-                <div className="text-center space-y-2">
-                  <Badge variant="secondary">
-                    {qrConfig.size}×{qrConfig.size}px
-                  </Badge>
-                  <div className="text-sm text-muted-foreground">
-                    Format: {qrConfig.format.toUpperCase()} | 
-                    Error Correction: {qrConfig.errorCorrection}
+              </Tabs>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  QR Code Options
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="size">Size (pixels)</Label>
+                    <Input
+                      id="size"
+                      type="number"
+                      min="100"
+                      max="1000"
+                      value={options.size}
+                      onChange={(e) => setOptions(prev => ({ ...prev, size: parseInt(e.target.value) || 200 }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="format">Format</Label>
+                    <select
+                      id="format"
+                      value={options.format}
+                      onChange={(e) => setOptions(prev => ({ ...prev, format: e.target.value as any }))}
+                      className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                    >
+                      <option value="png">PNG</option>
+                      <option value="svg">SVG</option>
+                      <option value="jpg">JPG</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bgColor">Background Color</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="bgColor"
+                        type="color"
+                        value={options.bgColor}
+                        onChange={(e) => setOptions(prev => ({ ...prev, bgColor: e.target.value }))}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={options.bgColor}
+                        onChange={(e) => setOptions(prev => ({ ...prev, bgColor: e.target.value }))}
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fgColor">Foreground Color</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="fgColor"
+                        type="color"
+                        value={options.fgColor}
+                        onChange={(e) => setOptions(prev => ({ ...prev, fgColor: e.target.value }))}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={options.fgColor}
+                        onChange={(e) => setOptions(prev => ({ ...prev, fgColor: e.target.value }))}
+                        className="flex-1"
+                      />
+                    </div>
                   </div>
                 </div>
+                <div className="space-y-2">
+                  <Label>Error Correction Level</Label>
+                  <div className="flex gap-2">
+                    {(['L', 'M', 'Q', 'H'] as const).map(level => (
+                      <Button
+                        key={level}
+                        variant={options.errorCorrectionLevel === level ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setOptions(prev => ({ ...prev, errorCorrectionLevel: level }))}
+                      >
+                        {level} ({level === 'L' ? 'Low' : level === 'M' ? 'Medium' : level === 'Q' ? 'Quartile' : 'High'})
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="includeMargin"
+                    checked={options.includeMargin}
+                    onChange={(e) => setOptions(prev => ({ ...prev, includeMargin: e.target.checked }))}
+                  />
+                  <Label htmlFor="includeMargin">Include Margin</Label>
+                </div>
               </div>
-            ) : (
-              <div className="text-center text-muted-foreground py-12">
-                <QrCode className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <p>No QR code generated yet</p>
-                <p className="text-sm">Enter content and click "Generate QR Code"</p>
+
+              <Button 
+                onClick={handleGenerate} 
+                disabled={isGenerating}
+                className="w-full"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Generate QR Code'
+                )}
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold mb-4">Generated QR Code</h3>
+                {qrCodeUrl ? (
+                  <div className="space-y-4">
+                    <div className="flex justify-center">
+                      <img 
+                        src={qrCodeUrl} 
+                        alt="Generated QR Code" 
+                        className="border rounded-lg shadow-sm"
+                        style={{ maxWidth: '100%', height: 'auto' }}
+                      />
+                    </div>
+                    <div className="flex justify-center gap-2">
+                      <Button variant="outline" onClick={downloadQRCode}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </Button>
+                      <Button variant="outline" onClick={copyQRCode}>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copy
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+                    <QrCode className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">QR code will appear here</p>
+                    <p className="text-sm text-muted-foreground">Enter your data and click Generate</p>
+                  </div>
+                )}
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Smartphone className="h-5 w-5" />
+                    How to Use
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>1. Select the type of QR code you want to create</p>
+                    <p>2. Enter the required information</p>
+                    <p>3. Customize the appearance if desired</p>
+                    <p>4. Click "Generate QR Code"</p>
+                    <p>5. Download or share your QR code</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Palette className="h-5 w-5" />
+                    Tips
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>• Higher error correction levels make QR codes more resistant to damage</p>
+                    <p>• Use high contrast colors for better scanability</p>
+                    <p>• Test QR codes on different devices before sharing</p>
+                    <p>• Keep the size appropriate for the intended use case</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

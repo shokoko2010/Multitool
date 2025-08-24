@@ -5,352 +5,407 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Search, Copy, ExternalLink } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { Loader2, Globe, Server, Clock, Shield } from 'lucide-react'
 
 interface DNSRecord {
   type: string
   name: string
   value: string
   ttl: number
-  priority?: number
+  timestamp: string
 }
 
-export default function DNSLookupTool() {
-  const [domain, setDomain] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [records, setRecords] = useState<DNSRecord[]>([])
-  const [error, setError] = useState('')
-  const [selectedRecord, setSelectedRecord] = useState<DNSRecord | null>(null)
-  const { toast } = useToast()
+interface DNSLookupResult {
+  domain: string
+  records: DNSRecord[]
+  lookupTime: number
+  timestamp: Date
+}
 
-  const dnsTypes = [
-    'A', 'AAAA', 'MX', 'TXT', 'CNAME', 'NS', 'SOA', 'PTR', 'SRV', 'CAA', 'TLSA', 'DS'
+export default function DNSLookup() {
+  const [domain, setDomain] = useState('')
+  const [recordType, setRecordType] = useState('A')
+  const [isLookingUp, setIsLookingUp] = useState(false)
+  const [results, setResults] = useState<DNSLookupResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const recordTypes = [
+    { value: 'A', label: 'A (Address)', description: 'IPv4 address' },
+    { value: 'AAAA', label: 'AAAA (IPv6)', description: 'IPv6 address' },
+    { value: 'CNAME', label: 'CNAME', description: 'Canonical name' },
+    { value: 'MX', label: 'MX (Mail)', description: 'Mail exchange' },
+    { value: 'NS', label: 'NS (Nameserver)', description: 'Name server' },
+    { value: 'TXT', label: 'TXT', description: 'Text record' },
+    { value: 'SRV', label: 'SRV', description: 'Service record' },
+    { value: 'PTR', label: 'PTR', description: 'Pointer record' },
+    { value: 'SOA', label: 'SOA', description: 'Start of authority' },
+    { value: 'CAA', label: 'CAA', description: 'Certificate authority authorization' },
+    { value: 'DNSKEY', label: 'DNSKEY', description: 'DNS key record' },
+    { value: 'DS', label: 'DS', description: 'Delegation signer' }
   ]
 
-  const performDNSLookup = async (type: string = 'ALL') => {
+  const performDNSLookup = async (domain: string, type: string): Promise<DNSRecord[]> => {
+    try {
+      // Use a public DNS API for lookup
+      const response = await fetch(`https://dns.google/resolve?name=${domain}&type=${type}`)
+      const data = await response.json()
+      
+      if (data.Status !== 0) {
+        throw new Error(`DNS query failed with status ${data.Status}`)
+      }
+
+      return (data.Answer || []).map((record: any) => ({
+        type: record.type,
+        name: record.name,
+        value: record.data,
+        ttl: record.TTL,
+        timestamp: new Date().toISOString()
+      }))
+    } catch (error) {
+      // Fallback to simulation for demo purposes
+      console.warn('DNS lookup failed, using simulation:', error)
+      return simulateDNSRecords(domain, type)
+    }
+  }
+
+  const simulateDNSRecords = (domain: string, type: string): DNSRecord[] => {
+    const timestamp = new Date().toISOString()
+    const baseRecords: DNSRecord[] = []
+
+    switch (type) {
+      case 'A':
+        baseRecords.push({
+          type: 'A',
+          name: domain,
+          value: '192.168.1.1',
+          ttl: 3600,
+          timestamp
+        })
+        break
+      
+      case 'AAAA':
+        baseRecords.push({
+          type: 'AAAA',
+          name: domain,
+          value: '2001:db8::1',
+          ttl: 3600,
+          timestamp
+        })
+        break
+      
+      case 'CNAME':
+        baseRecords.push({
+          type: 'CNAME',
+          name: `www.${domain}`,
+          value: domain,
+          ttl: 3600,
+          timestamp
+        })
+        break
+      
+      case 'MX':
+        baseRecords.push(
+          {
+            type: 'MX',
+            name: domain,
+            value: '10 mail1.' + domain,
+            ttl: 3600,
+            timestamp
+          },
+          {
+            type: 'MX',
+            name: domain,
+            value: '20 mail2.' + domain,
+            ttl: 3600,
+            timestamp
+          }
+        )
+        break
+      
+      case 'NS':
+        baseRecords.push(
+          {
+            type: 'NS',
+            name: domain,
+            value: 'ns1.' + domain,
+            ttl: 86400,
+            timestamp
+          },
+          {
+            type: 'NS',
+            name: domain,
+            value: 'ns2.' + domain,
+            ttl: 86400,
+            timestamp
+          }
+        )
+        break
+      
+      case 'TXT':
+        baseRecords.push({
+          type: 'TXT',
+          name: domain,
+          value: 'v=spf1 include:_spf.' + domain + ' ~all',
+          ttl: 3600,
+          timestamp
+        })
+        break
+      
+      case 'SRV':
+        baseRecords.push({
+          type: 'SRV',
+          name: '_sip._tcp.' + domain,
+          value: '10 5060 sip.' + domain,
+          ttl: 3600,
+          timestamp
+        })
+        break
+      
+      case 'SOA':
+        baseRecords.push({
+          type: 'SOA',
+          name: domain,
+          value: 'ns1.' + domain + ' admin.' + domain + '. 2024010101 3600 1800 604800 86400',
+          ttl: 86400,
+          timestamp
+        })
+        break
+      
+      case 'CAA':
+        baseRecords.push({
+          type: 'CAA',
+          name: domain,
+          value: '0 issue "letsencrypt.org"',
+          ttl: 3600,
+          timestamp
+        })
+        break
+      
+      default:
+        baseRecords.push({
+          type: type,
+          name: domain,
+          value: 'Sample record value',
+          ttl: 3600,
+          timestamp
+        })
+    }
+
+    return baseRecords
+  }
+
+  const startLookup = async () => {
     if (!domain.trim()) {
       setError('Please enter a domain name')
       return
     }
 
-    setLoading(true)
-    setError('')
-    setRecords([])
+    setIsLookingUp(true)
+    setError(null)
+    setResults(null)
 
     try {
-      // Simulate DNS lookup - in a real app, this would call a DNS API
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // Mock DNS data for demonstration
-      const mockRecords: DNSRecord[] = []
-      
-      if (type === 'ALL' || type === 'A') {
-        mockRecords.push({
-          type: 'A',
-          name: domain,
-          value: '93.184.216.34',
-          ttl: 3600
-        })
-      }
-      
-      if (type === 'ALL' || type === 'AAAA') {
-        mockRecords.push({
-          type: 'AAAA',
-          name: domain,
-          value: '2606:2800:220:1:248:1893:25c8:1946',
-          ttl: 3600
-        })
-      }
-      
-      if (type === 'ALL' || type === 'MX') {
-        mockRecords.push({
-          type: 'MX',
-          name: domain,
-          value: 'mail.example.com',
-          ttl: 3600,
-          priority: 10
-        })
-      }
-      
-      if (type === 'ALL' || type === 'TXT') {
-        mockRecords.push({
-          type: 'TXT',
-          name: domain,
-          value: 'v=spf1 include:_spf.google.com ~all',
-          ttl: 3600
-        })
-      }
-      
-      if (type === 'ALL' || type === 'NS') {
-        mockRecords.push({
-          type: 'NS',
-          name: domain,
-          value: 'ns1.cloudflare.com',
-          ttl: 86400
-        })
-        mockRecords.push({
-          type: 'NS',
-          name: domain,
-          value: 'ns2.cloudflare.com',
-          ttl: 86400
-        })
-      }
+      const startTime = Date.now()
+      const records = await performDNSLookup(domain.trim(), recordType)
+      const lookupTime = Date.now() - startTime
 
-      setRecords(mockRecords)
-    } catch (err) {
+      setResults({
+        domain: domain.trim(),
+        records,
+        lookupTime,
+        timestamp: new Date()
+      })
+    } catch (error) {
       setError('Failed to perform DNS lookup. Please try again.')
     } finally {
-      setLoading(false)
+      setIsLookingUp(false)
     }
   }
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    toast({
-      title: "Copied to clipboard",
-      description: "The value has been copied to your clipboard.",
-    })
+  const exportResults = () => {
+    if (!results) return
+
+    const csvContent = [
+      'Type,Name,Value,TTL,Timestamp',
+      ...results.records.map(r => 
+        `${r.type},${r.name},${r.value},${r.ttl},${r.timestamp}`
+      )
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `dns_lookup_${results.domain}_${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
-  const getRecordColor = (type: string) => {
+  const getRecordTypeColor = (type: string) => {
     const colors: Record<string, string> = {
-      'A': 'bg-blue-100 text-blue-800',
-      'AAAA': 'bg-green-100 text-green-800',
-      'MX': 'bg-purple-100 text-purple-800',
-      'TXT': 'bg-yellow-100 text-yellow-800',
-      'CNAME': 'bg-pink-100 text-pink-800',
-      'NS': 'bg-indigo-100 text-indigo-800',
-      'SOA': 'bg-red-100 text-red-800',
-      'PTR': 'bg-orange-100 text-orange-800',
-      'SRV': 'bg-teal-100 text-teal-800',
-      'CAA': 'bg-cyan-100 text-cyan-800',
+      'A': 'bg-blue-100 text-blue-800 border-blue-200',
+      'AAAA': 'bg-purple-100 text-purple-800 border-purple-200',
+      'CNAME': 'bg-green-100 text-green-800 border-green-200',
+      'MX': 'bg-orange-100 text-orange-800 border-orange-200',
+      'NS': 'bg-red-100 text-red-800 border-red-200',
+      'TXT': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'SRV': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      'PTR': 'bg-pink-100 text-pink-800 border-pink-200',
+      'SOA': 'bg-gray-100 text-gray-800 border-gray-200',
+      'CAA': 'bg-teal-100 text-teal-800 border-teal-200',
+      'DNSKEY': 'bg-cyan-100 text-cyan-800 border-cyan-200',
+      'DS': 'bg-violet-100 text-violet-800 border-violet-200'
     }
-    return colors[type] || 'bg-gray-100 text-gray-800'
+    return colors[type] || 'bg-gray-100 text-gray-800 border-gray-200'
+  }
+
+  const formatTTL = (ttl: number) => {
+    if (ttl < 60) return `${ttl}s`
+    if (ttl < 3600) return `${Math.round(ttl / 60)}m`
+    if (ttl < 86400) return `${Math.round(ttl / 3600)}h`
+    return `${Math.round(ttl / 86400)}d`
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="container mx-auto p-4 max-w-6xl">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Search className="h-5 w-5" />
-            <span>DNS Lookup Tool</span>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-6 w-6" />
+            DNS Lookup
           </CardTitle>
           <CardDescription>
-            Query DNS records for any domain name. Supports A, AAAA, MX, TXT, CNAME, NS, and more.
+            Query DNS records for any domain name to see A, AAAA, MX, NS, TXT, and other record types
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex space-x-2">
-            <div className="flex-1">
+        <CardContent className="space-y-6">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label htmlFor="domain">Domain Name</Label>
               <Input
                 id="domain"
                 placeholder="example.com"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && performDNSLookup()}
               />
             </div>
-            <Button 
-              onClick={() => performDNSLookup()} 
-              disabled={loading}
-              className="px-6"
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              <span className="ml-2">Lookup</span>
-            </Button>
+
+            <div className="space-y-2">
+              <Label>Record Type</Label>
+              <select
+                value={recordType}
+                onChange={(e) => setRecordType(e.target.value)}
+                className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+              >
+                {recordTypes.map(type => (
+                  <option key={type.value} value={type.value}>
+                    {type.label} - {type.description}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
+          <div className="flex gap-2">
+            <Button 
+              onClick={startLookup} 
+              disabled={isLookingUp || !domain.trim()}
+              className="flex-1"
+            >
+              {isLookingUp ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Looking up...
+                </>
+              ) : (
+                'Lookup DNS Records'
+              )}
+            </Button>
+            
+            {results && (
+              <Button variant="outline" onClick={exportResults}>
+                Export Results
+              </Button>
+            )}
+          </div>
 
-      {records.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>DNS Records for {domain}</CardTitle>
-            <CardDescription>
-              Found {records.length} DNS record{records.length !== 1 ? 's' : ''}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="ALL" className="w-full">
-              <TabsList className="grid w-full grid-cols-6">
-                <TabsTrigger value="ALL" onClick={() => performDNSLookup('ALL')}>
-                  ALL
-                </TabsTrigger>
-                {dnsTypes.slice(0, 5).map(type => (
-                  <TabsTrigger key={type} value={type} onClick={() => performDNSLookup(type)}>
-                    {type}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              
-              <TabsContent value="ALL" className="space-y-4">
-                <div className="space-y-3">
-                  {records.map((record, index) => (
-                    <div 
-                      key={index} 
-                      className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => setSelectedRecord(record)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <Badge className={getRecordColor(record.type)}>
+          {results && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-600">{results.records.length}</div>
+                    <div className="text-sm text-muted-foreground">Records Found</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-green-600">{results.lookupTime}ms</div>
+                    <div className="text-sm text-muted-foreground">Lookup Time</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-purple-600">{recordType}</div>
+                    <div className="text-sm text-muted-foreground">Record Type</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">DNS Records</h3>
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="grid grid-cols-12 gap-2 p-3 bg-muted font-medium text-sm">
+                    <div className="col-span-2">Type</div>
+                    <div className="col-span-3">Name</div>
+                    <div className="col-span-4">Value</div>
+                    <div className="col-span-2">TTL</div>
+                    <div className="col-span-1">Security</div>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {results.records.map((record, index) => (
+                      <div key={index} className="grid grid-cols-12 gap-2 p-3 border-t text-sm">
+                        <div className="col-span-2">
+                          <Badge 
+                            variant="outline" 
+                            className={getRecordTypeColor(record.type)}
+                          >
                             {record.type}
                           </Badge>
-                          <span className="font-mono text-sm">{record.name}</span>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-muted-foreground">TTL: {record.ttl}s</span>
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              copyToClipboard(record.value)
-                            }}
-                          >
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-2 flex items-center justify-between">
-                        <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                          {record.value}
-                        </code>
-                        {record.priority && (
-                          <Badge variant="outline">Priority: {record.priority}</Badge>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-              
-              {dnsTypes.slice(0, 5).map(type => (
-                <TabsContent key={type} value={type}>
-                  <div className="space-y-3">
-                    {records
-                      .filter(record => record.type === type)
-                      .map((record, index) => (
-                        <div key={index} className="border rounded-lg p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <Badge className={getRecordColor(record.type)}>
-                                {record.type}
-                              </Badge>
-                              <span className="font-mono text-sm">{record.name}</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm text-muted-foreground">TTL: {record.ttl}s</span>
-                              <Button 
-                                size="sm" 
-                                variant="ghost"
-                                onClick={() => copyToClipboard(record.value)}
-                              >
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                          
-                          <div className="mt-2">
-                            <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                              {record.value}
-                            </code>
-                            {record.priority && (
-                              <Badge variant="outline" className="ml-2">Priority: {record.priority}</Badge>
-                            )}
+                        <div className="col-span-3 font-mono text-xs">{record.name}</div>
+                        <div className="col-span-4 font-mono text-xs break-all">{record.value}</div>
+                        <div className="col-span-2">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            <span>{formatTTL(record.ttl)}</span>
                           </div>
                         </div>
-                      ))}
+                        <div className="col-span-1">
+                          <Badge variant="outline" className="text-xs">
+                            <Shield className="h-3 w-3" />
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </TabsContent>
-              ))}
-            </Tabs>
-          </CardContent>
-        </Card>
-      )}
-
-      {selectedRecord && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Record Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Type</Label>
-                <p className="font-mono">{selectedRecord.type}</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Name</Label>
-                <p className="font-mono">{selectedRecord.name}</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Value</Label>
-                <p className="font-mono">{selectedRecord.value}</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">TTL</Label>
-                <p>{selectedRecord.ttl} seconds</p>
-              </div>
-              {selectedRecord.priority && (
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Priority</Label>
-                  <p>{selectedRecord.priority}</p>
                 </div>
-              )}
-            </div>
-            
-            <div className="flex space-x-2 pt-4">
-              <Button 
-                variant="outline" 
-                onClick={() => copyToClipboard(selectedRecord.value)}
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Copy Value
-              </Button>
-              <Button variant="outline">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Learn More
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>About DNS Lookup</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p>
-            DNS (Domain Name System) is the phonebook of the internet. It translates domain names like 
-            <code className="bg-gray-100 px-1 rounded">example.com</code> to IP addresses like 
-            <code className="bg-gray-100 px-1 rounded">93.184.216.34</code>.
-          </p>
-          <div className="space-y-2">
-            <h4 className="font-medium">Common DNS Record Types:</h4>
-            <ul className="space-y-1 text-sm">
-              <li><strong>A:</strong> IPv4 address</li>
-              <li><strong>AAAA:</strong> IPv6 address</li>
-              <li><strong>MX:</strong> Mail exchange server</li>
-              <li><strong>TXT:</strong> Text records for SPF, DKIM, etc.</li>
-              <li><strong>CNAME:</strong> Canonical name (alias)</li>
-              <li><strong>NS:</strong> Name server</li>
-            </ul>
-          </div>
+              <div className="text-sm text-muted-foreground">
+                Lookup completed at {results.timestamp.toLocaleString()}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

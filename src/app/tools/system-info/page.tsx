@@ -78,6 +78,7 @@ interface SystemInfo {
 }
 
 export default function SystemInfo() {
+  const { toast } = useToast()
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [locationPermission, setLocationPermission] = useState(false)

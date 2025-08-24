@@ -9,10 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { Upload, Download, RotateCcw, Volume2, FileAudio } from 'lucide-react'
-import { toast } from 'sonner'
 import { useToast } from '@/hooks/use-toast'
 
 export default function AudioConverter() {
+  const { toast } = useToast()
   const [audioFile, setAudioFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [outputFormat, setOutputFormat] = useState('mp3')
@@ -30,7 +30,11 @@ export default function AudioConverter() {
     if (!file) return
 
     if (!file.type.startsWith('audio/')) {
-      toast.error("Invalid file type: Please select an audio file")
+      toast({
+        title: "Invalid file type",
+        description: "Please select an audio file",
+        variant: "destructive"
+      })
       return
     }
 
@@ -49,7 +53,11 @@ export default function AudioConverter() {
 
   const convertAudio = () => {
     if (!audioFile) {
-      toast.error("No file selected: Please select an audio file to convert")
+      toast({
+        title: "No file selected",
+        description: "Please select an audio file to convert",
+        variant: "destructive"
+      })
       return
     }
 
@@ -70,10 +78,17 @@ export default function AudioConverter() {
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
         
-        toast.success(`Audio converted successfully: File converted to ${outputFormat.toUpperCase()} format`)
+        toast({
+          title: "Audio converted successfully",
+          description: `File converted to ${outputFormat.toUpperCase()} format`
+        })
       }, 2000)
     } catch (error) {
-      toast.error("Conversion failed: Unable to convert the audio file")
+      toast({
+        title: "Conversion failed",
+        description: "Unable to convert the audio file",
+        variant: "destructive"
+      })
     } finally {
       setLoading(false)
     }

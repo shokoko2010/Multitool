@@ -12,6 +12,7 @@ import { Shield, AlertTriangle, CheckCircle, XCircle, Globe, Search, RefreshCw, 
 import { useToast } from '@/hooks/use-toast'
 
 export default function SafeURLChecker() {
+  const { toast } = useToast()
   const [url, setUrl] = useState('')
   const [isChecking, setIsChecking] = useState(false)
   const [checkResult, setCheckResult] = useState<{

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
@@ -10,9 +10,10 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Copy, Download, FileText, Hash, Type, AlignLeft, RotateCcw, Zap, Search, BarChart3, TrendingUp, Filter } from 'lucide-react'
 import { motion } from 'framer-motion'
-import toast from '@/lib/toast'
+import { useToast } from '@/hooks/use-toast'
 
 export default function KeywordExtractor() {
+  const { toast } = useToast()
   const [inputText, setInputText] = useState('')
   const [minWordLength, setMinWordLength] = useState(3)
   const [maxKeywords, setMaxKeywords] = useState(20)
@@ -26,7 +27,11 @@ export default function KeywordExtractor() {
 
   const extractKeywords = () => {
     if (!inputText.trim()) {
-      toast.error('Please enter some text to extract keywords')
+      toast({
+      title: "Error",
+      description: "Please enter some text to extract keywords",
+      variant: "destructive"
+    })
       return
     }
 
@@ -99,19 +104,28 @@ export default function KeywordExtractor() {
     keywordData = keywordData.slice(0, maxKeywords)
 
     setExtractedKeywords(keywordData)
-    toast.success('Keywords extracted successfully!')
+    toast({
+      title: "Success",
+      description: "Keywords extracted successfully!"
+    })
   }
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text)
-    toast.success('Copied to!')
+    toast({
+      title: "Copied",
+      description: "Copied to clipboard!"
+    })
   }
 
   const handleCopyAll = () => {
     if (!extractedKeywords) return
     const allKeywords = extractedKeywords.map(k => k.word).join(', ')
     navigator.clipboard.writeText(allKeywords)
-    toast.success('All keywords copied!')
+    toast({
+      title: "Success",
+      description: "All keywords copied!"
+    })
   }
 
   const handleDownload = () => {
@@ -133,13 +147,19 @@ export default function KeywordExtractor() {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-    toast.success('Downloaded successfully!')
+    toast({
+      title: "Success",
+      description: "Downloaded successfully!"
+    })
   }
 
   const handleClear = () => {
     setInputText('')
     setExtractedKeywords(null)
-    toast.success('Cleared!')
+    toast({
+      title: "Success",
+      description: "Cleared!"
+    })
   }
 
   return (

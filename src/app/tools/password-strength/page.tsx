@@ -12,6 +12,7 @@ import { Shield, Eye, EyeOff, RefreshCw, AlertTriangle, CheckCircle, XCircle, Ke
 import { useToast } from '@/hooks/use-toast'
 
 export default function PasswordStrengthChecker() {
+  const { toast } = useToast()
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<{

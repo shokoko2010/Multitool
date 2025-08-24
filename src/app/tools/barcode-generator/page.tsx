@@ -294,7 +294,7 @@ export default function BarcodeGeneratorTool() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
-                <Image className="h-5 w-5" alt="" />
+                <Image className="h-5 w-5" />
                 Generated Barcode
               </span>
               {generatedBarcode && (

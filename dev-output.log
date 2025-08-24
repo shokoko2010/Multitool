@@ -1,0 +1,47 @@
+
+> dev
+> next dev
+
+   ▲ Next.js 15.4.6
+   - Local:        http://localhost:3000
+   - Network:      http://21.0.1.72:3000
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1980ms
+ ○ Compiling / ...
+ ✓ Compiled / in 7.4s (1737 modules)
+ GET / 200 in 9864ms
+ GET / 200 in 1465ms
+ GET / 200 in 1458ms
+ GET / 200 in 1107ms
+ GET / 200 in 1081ms
+ GET / 200 in 1094ms
+ ✓ Compiled /favicon.ico in 446ms (920 modules)
+ GET /favicon.ico 200 in 607ms
+ ⚠ Cross origin request detected from preview-chat-d7886fd6-5b32-4c34-84bb-6fe0a8161fbf.space.z.ai to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ ○ Compiling /api/auth/[...nextauth] ...
+ ✓ Compiled /api/auth/[...nextauth] in 1683ms (1958 modules)
+[next-auth][warn][NEXTAUTH_URL] 
+https://next-auth.js.org/warnings#nextauth_url
+[next-auth][warn][NO_SECRET] 
+https://next-auth.js.org/warnings#no_secret
+ GET /api/auth/session 200 in 2570ms
+ GET / 200 in 1673ms
+ GET /favicon.ico 200 in 41ms
+ GET /api/auth/session 200 in 44ms
+ GET / 200 in 1333ms
+ GET /favicon.ico 200 in 40ms
+ GET /api/auth/session 200 in 46ms
+ GET / 200 in 1341ms
+ GET /favicon.ico 200 in 48ms
+ GET /api/auth/session 200 in 51ms
+ ✓ Compiled in 405ms (801 modules)
+ ✓ Compiled in 167ms (801 modules)
+ ✓ Compiled in 155ms (801 modules)
+ ✓ Compiled in 136ms (801 modules)
+ ✓ Compiled in 127ms (801 modules)
+ ✓ Compiled / in 377ms (903 modules)
+ GET / 200 in 2146ms
+[?25h

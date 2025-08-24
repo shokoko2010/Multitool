@@ -265,11 +265,12 @@ function convertDataType(value: string, type: string): any {
   }
 
   switch (type) {
-    case 'number':
+    case 'number': {
       const num = parseFloat(value);
       return isNaN(num) ? value : num;
+    }
     
-    case 'boolean':
+    case 'boolean': {
       const lowerValue = value.toLowerCase();
       if (lowerValue === 'true' || lowerValue === 'yes' || lowerValue === '1') {
         return true;
@@ -277,8 +278,9 @@ function convertDataType(value: string, type: string): any {
         return false;
       }
       return value;
+    }
     
-    case 'auto':
+    case 'auto': {
       // Try to detect data type automatically
       if (value.toLowerCase() === 'true') return true;
       if (value.toLowerCase() === 'false') return false;
@@ -290,6 +292,7 @@ function convertDataType(value: string, type: string): any {
       }
       
       return value;
+    }
     
     default:
       return value;

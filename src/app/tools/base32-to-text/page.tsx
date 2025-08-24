@@ -28,10 +28,10 @@ export default function Base32ToText() {
     const bytes = new TextEncoder().encode(text)
     let result = ''
     
- buffer = 0
+    let buffer = 0
     let bitsLeft = 0
 
-for (const byte of bytes) {
+    for (const byte of bytes) {
       buffer = (buffer << 8) | byte
       bitsLeft += 8
 
@@ -48,14 +48,14 @@ for (const byte of bytes) {
     }
 
     // Add padding if needed
-    const paddingLength = (8 - Math.ceil(result.length / )) * 8 - result.length )) % 8;
- if(paddingLength >0) result += '==='.slice(0, paddingLength);
+    const paddingLength = ((8 - Math.ceil(result.length / 8)) * 8 - result.length) % 8;
+    if(paddingLength > 0) result += '==='.slice(0, paddingLength);
 
     return result
   }
 
   const decodeBase32 = (base32: string): string => {
- if if (!base32) return ''
+    if (!base32) return ''
     
     // Track usage
     trackUsage()

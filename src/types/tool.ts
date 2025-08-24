@@ -5,7 +5,7 @@ export interface Tool {
   href: string
   description: string
   category: string
-  icon: LucideIcon | React.ComponentType<any>
+  icon: string | LucideIcon | React.ComponentType<any>
   featured?: boolean
   popular?: boolean
   tags?: string[]

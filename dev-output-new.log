@@ -1,0 +1,126 @@
+
+> dev
+> next dev
+
+   ▲ Next.js 15.4.6
+   - Local:        http://localhost:3000
+   - Network:      http://21.0.1.72:3000
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1978ms
+ ○ Compiling / ...
+ ✓ Compiled / in 7.3s (1737 modules)
+ GET / 200 in 9853ms
+ GET / 200 in 1369ms
+ GET / 200 in 1431ms
+ GET / 200 in 1375ms
+ GET / 200 in 1120ms
+ GET / 200 in 1128ms
+ GET / 200 in 1084ms
+ GET / 200 in 1040ms
+ GET / 200 in 1259ms
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /favicon.ico in 581ms (920 modules)
+ GET /favicon.ico 200 in 756ms
+ ⚠ Cross origin request detected from preview-chat-d7886fd6-5b32-4c34-84bb-6fe0a8161fbf.space.z.ai to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ ○ Compiling /api/auth/[...nextauth] ...
+ ✓ Compiled /api/auth/[...nextauth] in 2.1s (1958 modules)
+[next-auth][warn][NEXTAUTH_URL] 
+https://next-auth.js.org/warnings#nextauth_url
+[next-auth][warn][NO_SECRET] 
+https://next-auth.js.org/warnings#no_secret
+ GET /api/auth/session 200 in 3149ms
+ GET / 200 in 1678ms
+ GET / 200 in 1158ms
+ GET / 200 in 1116ms
+ GET /favicon.ico 200 in 57ms
+ GET /api/auth/session 200 in 83ms
+ GET / 200 in 1343ms
+ GET / 200 in 1083ms
+ GET / 200 in 1103ms
+ GET / 200 in 1109ms
+ GET / 200 in 1142ms
+ GET / 200 in 1110ms
+ GET / 200 in 1141ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 591ms (1726 modules)
+ GET /favicon.ico 404 in 625ms
+ ✓ Compiled /api/auth/[...nextauth] in 217ms (1158 modules)
+[next-auth][warn][NEXTAUTH_URL] 
+https://next-auth.js.org/warnings#nextauth_url
+[next-auth][warn][NO_SECRET] 
+https://next-auth.js.org/warnings#no_secret
+ GET /api/auth/session 200 in 528ms
+ GET / 200 in 1910ms
+ GET / 200 in 1175ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/home/z/my-project/.next/server/app/favicon.ico/route.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/home/z/my-project/.next/server/app/favicon.ico/route.js',
+  page: '/favicon.ico'
+}
+ GET /favicon.ico 500 in 129ms
+ GET /api/auth/session 200 in 45ms
+ GET / 200 in 1320ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/home/z/my-project/.next/server/app/favicon.ico/route.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/home/z/my-project/.next/server/app/favicon.ico/route.js',
+  page: '/favicon.ico'
+}
+ GET /favicon.ico 500 in 69ms
+ GET /api/auth/session 200 in 46ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 2.6s (2037 modules)
+ GET / 404 in 3192ms
+ GET / 200 in 1716ms
+ ✓ Compiled /favicon.ico in 285ms (1101 modules)
+ GET /favicon.ico 200 in 511ms
+ GET / 200 in 1765ms
+ GET /favicon.ico 404 in 23ms
+ ✓ Compiled /api/auth/[...nextauth] in 268ms (1252 modules)
+[next-auth][warn][NEXTAUTH_URL] 
+https://next-auth.js.org/warnings#nextauth_url
+[next-auth][warn][NO_SECRET] 
+https://next-auth.js.org/warnings#no_secret
+ GET /api/auth/session 200 in 782ms
+ GET / 200 in 1585ms
+ GET /favicon.ico 200 in 38ms
+ GET /favicon.ico 200 in 28ms
+ GET /api/auth/session 200 in 316ms
+ GET /api/auth/session 200 in 240ms
+ GET / 200 in 1337ms
+ GET /favicon.ico 200 in 28ms
+ GET /api/auth/session 200 in 239ms
+ GET /api/auth/session 200 in 241ms
+ GET / 200 in 1180ms
+ GET / 200 in 1104ms
+ GET /favicon.ico 200 in 57ms
+ GET /api/auth/session 200 in 242ms
+ GET /api/auth/session 200 in 226ms
+ ✓ Compiled in 1136ms (1053 modules)
+ ✓ Compiled in 370ms (948 modules)
+ ✓ Compiled in 299ms (948 modules)
+ ✓ Compiled in 316ms (948 modules)
+ ✓ Compiled in 258ms (948 modules)
+ ✓ Compiled in 420ms (948 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename '/home/z/my-project/.next/cache/webpack/client-development/0.pack.gz_' -> '/home/z/my-project/.next/cache/webpack/client-development/0.pack.gz'
+ ✓ Compiled / in 368ms (997 modules)
+ GET / 200 in 2208ms
+ ✓ Compiled /favicon.ico in 162ms (1014 modules)
+ GET /favicon.ico 200 in 306ms
+ ✓ Compiled /api/auth/[...nextauth] in 180ms (1251 modules)
+[next-auth][warn][NEXTAUTH_URL] 
+https://next-auth.js.org/warnings#nextauth_url
+[next-auth][warn][NO_SECRET] 
+https://next-auth.js.org/warnings#no_secret
+ GET /api/auth/session 200 in 398ms
+ GET /api/auth/session 200 in 33ms
+ GET / 200 in 1720ms
+ GET /favicon.ico 200 in 41ms
+ GET /api/auth/session 200 in 45ms
+ GET /api/auth/session 200 in 40ms

@@ -12,6 +12,7 @@ import { Upload, Download, RotateCcw, Video, Film } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 export default function VideoConverter() {
+  const { toast } = useToast()
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [outputFormat, setOutputFormat] = useState('mp4')

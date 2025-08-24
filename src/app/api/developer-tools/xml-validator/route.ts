@@ -389,7 +389,7 @@ function extractAttributes(tag: string): Record<string, string> {
 
 function parseContent(content: string): any[] {
   const children: any[] = [];
-  const elementRegex = /<([^\/][^>]*>([\s\S]*?)<\/\1>|<([^\/][^>]*)\/>/g;
+  const elementRegex = /<([^>]+)>([\s\S]*?)<\/\1>|<([^>]+)\/>/g;
   let match;
   
   while ((match = elementRegex.exec(content)) !== null) {

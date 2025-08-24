@@ -22,6 +22,7 @@ interface VideoInfo {
 }
 
 export default function VideoDownloader() {
+  const { toast } = useToast()
   const [videoUrl, setVideoUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null)

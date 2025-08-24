@@ -1,0 +1,137 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Plan {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  price       Float    @default(0)
+  maxTools    Int      @default(10)
+  maxUsage    Int      @default(100)
+  features    String   // JSON string
+  priority    Int      @default(0)
+  status      String   @default("ACTIVE") // ACTIVE, INACTIVE, CANCELLED, EXPIRED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subscriptions Subscription[]
+  planTools    PlanTool[]
+
+  @@map("plans")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  password      String?
+  role          String   @default("USER") // USER, ADMIN
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // User preferences
+  theme         String   @default("light") // light, dark, system
+  language      String   @default("en")
+  timezone      String   @default("UTC")
+  notifications Boolean  @default(true)
+  newsletter    Boolean  @default(false)
+  
+  // User settings (stored as JSON strings)
+  preferredCategories String   @default("[]") // JSON string array
+  favoriteTools      String   @default("[]") // JSON string array
+  recentTools        String   @default("[]") // JSON string array
+  
+  // Relations
+  toolUsage    ToolUsage[]
+  apiKeys      ApiKey[]
+  subscriptions Subscription[]
+  usage        Usage[]
+
+  @@map("users")
+}
+
+model Subscription {
+  id          String   @id @default(cuid())
+  userId      String
+  planId      String
+  status      String   @default("ACTIVE") // ACTIVE, INACTIVE, CANCELLED, EXPIRED
+  startsAt    DateTime @default(now())
+  endsAt      DateTime?
+  cancelledAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, planId])
+  @@map("subscriptions")
+}
+
+model PlanTool {
+  id          String   @id @default(cuid())
+  planId      String
+  toolId      String
+  accessType  String   @default("UNLIMITED") // UNLIMITED, LIMITED, BLOCKED
+  maxUsage    Int      @default(-1)
+  features    String   // JSON string
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, toolId])
+  @@map("plan_tools")
+}
+
+model Usage {
+  id          String   @id @default(cuid())
+  userId      String
+  toolId      String
+  count       Int      @default(0)
+  lastUsed    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, toolId])
+  @@map("usage")
+}
+
+model ToolUsage {
+  id          String   @id @default(cuid())
+  userId      String
+  toolId      String
+  usageCount  Int      @default(1)
+  lastUsedAt  DateTime @default(now())
+  usageData   Json?    // Additional usage data
+  duration    Int?     // Usage duration in seconds
+  success     Boolean  @default(true) // Whether the tool usage was successful
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tool_usage")
+}
+
+model ApiKey {
+  id        String   @id @default(cuid())
+  userId    String
+  key       String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  expiresAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
